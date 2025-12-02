@@ -459,12 +459,14 @@ def generate_prompt(
 
     try:
         full_response = ""
+        chunk_count = 0
         for chunk in model.create_chat_completion(
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
             stream=True
         ):
+            chunk_count += 1
             delta = chunk.get("choices", [{}])[0].get("delta", {})
             content = delta.get("content", "")
             if content:
@@ -472,10 +474,21 @@ def generate_prompt(
                 yield full_response
 
         if not full_response:
-            yield "No response generated. Try adjusting the temperature."
+            hints = []
+            if n_gpu_layers != 0:
+                hints.append("Set GPU Layers to 0 (CPU mode)")
+            hints.append("Try increasing temperature")
+            hints.append("Try a shorter input")
+            yield f"No response generated. Try:\n- " + "\n- ".join(hints)
 
+    except RuntimeError as e:
+        error_msg = str(e).lower()
+        if "memory" in error_msg or "cuda" in error_msg or "gpu" in error_msg:
+            yield f"GPU/Memory error: {str(e)}\n\nTry setting GPU Layers to 0 for CPU-only mode."
+        else:
+            yield f"Runtime error: {str(e)}"
     except Exception as e:
-        yield f"Error generating prompt: {str(e)}"
+        yield f"Error generating prompt: {str(e)}\n\nIf this persists, try restarting the application."
 
 
 def create_ui():
@@ -543,7 +556,7 @@ def create_ui():
                     label="Max Tokens",
                     minimum=100,
                     maximum=2000,
-                    value=500,
+                    value=256,
                     step=50,
                     info="Maximum output length"
                 )
