@@ -1,0 +1,32 @@
+services:
+  # GPU version - use with: docker compose --profile gpu up -d
+  prompt-generator-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    container_name: prompt-generator-gpu
+    profiles: ["gpu"]
+    ports:
+      - "7610:7610"
+    volumes:
+      - ./models:/app/models
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # CPU version - default, starts with: docker compose up -d
+  prompt-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpu
+    container_name: prompt-generator
+    ports:
+      - "7610:7610"
+    volumes:
+      - ./models:/app/models
+    restart: unless-stopped
