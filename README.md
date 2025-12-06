@@ -1,47 +1,68 @@
-<p align="center">
-  <img src="assets/logo.svg" alt="PromptMill" width="300">
-</p>
+<div align="center">
 
-<p align="center">
-  <strong>AI-powered prompt generator for video, image, and creative content</strong>
-</p>
+<img src="assets/logo.svg" alt="PromptMill" width="320">
 
-<p align="center">
-  <a href="#features">Features</a> •
-  <a href="#quick-start">Quick Start</a> •
-  <a href="#supported-targets">Targets</a> •
-  <a href="#configuration">Configuration</a>
-</p>
+<br/>
+
+**AI-powered prompt generator for video, image, and creative content**
+
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![Gradio](https://img.shields.io/badge/Gradio-4.x-FF6F00?style=flat-square&logo=gradio&logoColor=white)](https://gradio.app)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://docker.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/kekzl/PromptMill?style=flat-square&logo=github)](https://github.com/kekzl/PromptMill)
+
+[Features](#-features) · [Quick Start](#-quick-start) · [Supported Targets](#-supported-targets) · [Models](#-llm-options) · [Configuration](#%EF%B8%8F-configuration)
+
+</div>
 
 ---
 
-A self-contained web UI with selectable LLMs (scaled by GPU VRAM) for generating optimized prompts. No external API dependencies - runs entirely locally.
+## Overview
 
-## Features
+PromptMill is a self-contained web UI that runs **entirely locally** - no API keys, no cloud dependencies. It uses selectable LLMs (scaled by your GPU VRAM) to generate optimized prompts for the latest AI video and image generators.
 
-- **14 Preset Roles** for video, image, and creative tasks
-- **7 LLM Options** from 0.5B to 14B parameters
-- **Auto-detects GPU VRAM** and selects optimal model
-- Dark mode UI with streaming text generation
-- One-click copy button
+<div align="center">
+<table>
+<tr>
+<td align="center"><b>14</b><br><sub>Preset Roles</sub></td>
+<td align="center"><b>7</b><br><sub>LLM Options</sub></td>
+<td align="center"><b>0.5B-14B</b><br><sub>Parameters</sub></td>
+<td align="center"><b>100%</b><br><sub>Local</sub></td>
+</tr>
+</table>
+</div>
 
-## Quick Start
+---
+
+## ✨ Features
+
+- **Smart GPU Detection** - Automatically selects the best model for your VRAM
+- **7 LLM Tiers** - From 0.5B (CPU) to 14B parameters (24GB+ VRAM)
+- **14 Specialized Roles** - Optimized prompts for each target AI
+- **Dark Mode UI** - Modern interface with streaming generation
+- **Zero Config** - Works out of the box with Docker
+- **Fully Offline** - No API keys or internet required after setup
+
+---
+
+## 🚀 Quick Start
 
 ### Docker (Recommended)
 
 ```bash
-# GPU (NVIDIA CUDA) - auto-detects VRAM and selects best model
+# GPU (NVIDIA) - auto-detects VRAM
 docker compose --profile gpu up -d
 
 # CPU only
 docker compose --profile cpu up -d
 ```
 
-Open http://localhost:7610
+Open **http://localhost:7610**
 
-Models auto-download on first use and persist in `./models/`.
+> Models auto-download on first use and persist in `./models/`
 
-### Manual Setup
+### Manual Installation
 
 ```bash
 # GPU (CUDA)
@@ -49,67 +70,112 @@ CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python
 pip install gradio huggingface_hub
 python app.py
 
-# CPU Only
+# CPU only
 pip install llama-cpp-python gradio huggingface_hub
 python app.py
 ```
 
-## Supported Targets
+---
 
-### Video Generation
-- **Wan2.1** - Open-source text-to-video with cinematic quality
-- **Wan2.2** - Latest Wan with improved motion and physics
-- **Hunyuan Video** - Tencent open-source text-to-video
-- **Hunyuan Video 1.5** - Extended duration and image-to-video
+## 🎯 Supported Targets
 
-### Image Generation
-- **Stable Diffusion** - SD/SDXL prompts with quality tags
-- **Midjourney** - Artistic MJ-style prompts with parameters
-- **FLUX** - Black Forest Labs natural language prompts
-- **DALL-E 3** - OpenAI detailed scene descriptions
-- **ComfyUI** - Workflow-compatible positive/negative prompts
+<table>
+<tr>
+<td width="33%">
 
-### Creative & Coding
-- **Story Writer** - Creative writing and narratives
-- **Code Generator** - Programming snippets with best practices
-- **Technical Writer** - Documentation and READMEs
-- **Marketing Copy** - Ad copy, social media, CTAs
-- **SEO Content** - Blog posts with meta optimization
+### 🎬 Video
+- **Wan2.1** - Cinematic text-to-video
+- **Wan2.2** - Enhanced motion & physics
+- **Hunyuan Video** - Tencent T2V
+- **Hunyuan 1.5** - Extended duration + I2V
 
-## LLM Options
+</td>
+<td width="33%">
 
-| GPU VRAM | Model | Parameters | Quality |
-|----------|-------|------------|---------|
-| CPU Only | Qwen2.5 0.5B Q8 | 0.5B | Basic |
-| 4GB | Qwen2.5 1.5B Q4_K_M | 1.5B | Good |
-| 6GB | Qwen2.5 3B Q4_K_M | 3B | Great |
-| 8GB | Dolphin Mistral 7B Q4_K_M | 7B | Excellent |
-| 12GB | Qwen2.5 7B Q6_K_L | 7B | High |
-| 16GB+ | Qwen2.5 14B Q4_K_M | 14B | Premium |
-| 24GB+ | Qwen2.5 14B Q8 | 14B | Maximum |
+### 🖼️ Image
+- **Stable Diffusion** - SD/SDXL
+- **Midjourney** - Artistic style
+- **FLUX** - Black Forest Labs
+- **DALL-E 3** - OpenAI
+- **ComfyUI** - Workflow prompts
 
-## Configuration
+</td>
+<td width="33%">
 
-The app auto-detects GPU VRAM and selects the optimal model:
-- GPU detected: Uses all GPU layers, selects model by VRAM
-- No GPU: Uses CPU mode with lightweight 0.5B model
+### ✍️ Creative
+- **Story Writer** - Narratives
+- **Code Generator** - Programming
+- **Technical Writer** - Docs
+- **Marketing Copy** - Ads & CTAs
+- **SEO Content** - Blog posts
 
-You can manually override the model and GPU layers in the UI.
+</td>
+</tr>
+</table>
 
-## File Structure
+---
+
+## 🧠 LLM Options
+
+PromptMill automatically selects the best model based on your GPU:
+
+| VRAM | Model | Size | Quality |
+|:-----|:------|:-----|:--------|
+| CPU | Qwen2.5 0.5B Q8 | ~1GB | ⭐ |
+| 4GB | Qwen2.5 1.5B Q4 | ~2GB | ⭐⭐ |
+| 6GB | Qwen2.5 3B Q4 | ~4GB | ⭐⭐⭐ |
+| 8GB | Dolphin Mistral 7B Q4 | ~6GB | ⭐⭐⭐⭐ |
+| 12GB | Qwen2.5 7B Q6 | ~10GB | ⭐⭐⭐⭐ |
+| 16GB+ | Qwen2.5 14B Q4 | ~12GB | ⭐⭐⭐⭐⭐ |
+| 24GB+ | Qwen2.5 14B Q8 | ~18GB | ⭐⭐⭐⭐⭐ |
+
+---
+
+## ⚙️ Configuration
+
+The app auto-configures based on your hardware:
+
+- **GPU detected** → Uses all layers on GPU, selects model by VRAM
+- **No GPU** → CPU mode with lightweight 0.5B model
+
+Manual override available in the UI for GPU layers and model selection.
+
+---
+
+## 📁 Project Structure
 
 ```
-.
+PromptMill/
 ├── app.py              # Main application
 ├── assets/
-│   └── logo.svg        # PromptMill logo
-├── Dockerfile.gpu      # GPU/CUDA build
-├── Dockerfile.cpu      # CPU-only build
-├── docker-compose.yml  # Docker profiles
-├── requirements.txt
-└── models/             # Downloaded models (persisted)
+│   └── logo.svg        # Logo
+├── Dockerfile.gpu      # CUDA build
+├── Dockerfile.cpu      # CPU build
+├── docker-compose.yml  # Docker orchestration
+├── requirements.txt    # Python deps
+└── models/             # Downloaded LLMs (persisted)
 ```
 
-## License
+---
 
-MIT
+## 🤝 Contributing
+
+Contributions welcome! Feel free to:
+- Report bugs or request features via [Issues](https://github.com/kekzl/PromptMill/issues)
+- Submit pull requests
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+<div align="center">
+
+**[⬆ Back to top](#)**
+
+Made with ❤️ for the AI creative community
+
+</div>
