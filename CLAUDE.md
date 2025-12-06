@@ -42,14 +42,14 @@ Access at http://localhost:7610
 
 Single-file application (`app.py`) with:
 
-- **Model Selector**: `MODEL_CONFIGS` dict with 7 LLM options scaled by VRAM (0.5B to 14B parameters)
-  - CPU Only: Qwen2.5 0.5B Q8
-  - 4GB VRAM: Qwen2.5 1.5B Q4_K_M
-  - 6GB VRAM: Qwen2.5 3B Q4_K_M
-  - 8GB VRAM: Dolphin Mistral 7B Q4_K_M (default)
-  - 12GB VRAM: Qwen2.5 7B Q6_K_L
-  - 16GB+ VRAM: Qwen2.5 14B Q4_K_M
-  - 24GB+ VRAM: Qwen2.5 14B Q8
+- **Model Selector**: `MODEL_CONFIGS` dict with 7 uncensored Dolphin LLM options scaled by VRAM (1B to 8B parameters)
+  - CPU Only: Dolphin 3.0 Llama 3.2 1B Q8
+  - 4GB VRAM: Dolphin 3.0 Llama 3.2 3B Q4_K_M
+  - 6GB VRAM: Dolphin 3.0 Llama 3.2 3B Q8
+  - 8GB VRAM: Dolphin 3.0 Llama 3.1 8B Q4_K_M (default)
+  - 12GB VRAM: Dolphin 3.0 Llama 3.1 8B Q6_K_L
+  - 16GB+ VRAM: Dolphin 3.0 Llama 3.1 8B Q8
+  - 24GB+ VRAM: Dolphin 2.9.4 Llama 3.1 8B Q8 (131K context)
 - **Theme**: Dark mode with custom Gradio theme (`create_theme()`)
 - **Branding**: Logo in `assets/logo.svg`, loaded via `get_logo_html()`
 - **Model Management**: `load_model()` handles lazy loading, `unload_model()` frees memory when switching models

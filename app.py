@@ -42,53 +42,53 @@ MODELS_DIR = Path(os.environ.get("MODELS_DIR", "/app/models"))
 
 MODEL_CONFIGS = {
     "CPU Only (2-4GB RAM)": {
-        "repo": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
-        "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
-        "description": "Qwen2.5 0.5B Q8 - Lightweight, runs on CPU",
+        "repo": "bartowski/Dolphin3.0-Llama3.2-1B-GGUF",
+        "file": "Dolphin3.0-Llama3.2-1B-Q8_0.gguf",
+        "description": "Dolphin 3.0 1B Q8 - Uncensored, lightweight",
         "vram": "~1GB",
         "n_ctx": 4096,
     },
     "4GB VRAM (GTX 1650, RTX 3050)": {
-        "repo": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
-        "file": "qwen2.5-1.5b-instruct-q4_k_m.gguf",
-        "description": "Qwen2.5 1.5B Q4_K_M - Good balance for low VRAM",
-        "vram": "~2GB",
+        "repo": "bartowski/Dolphin3.0-Llama3.2-3B-GGUF",
+        "file": "Dolphin3.0-Llama3.2-3B-Q4_K_M.gguf",
+        "description": "Dolphin 3.0 3B Q4_K_M - Uncensored, good balance",
+        "vram": "~2.5GB",
         "n_ctx": 4096,
     },
     "6GB VRAM (RTX 2060, RTX 3060)": {
-        "repo": "bartowski/Qwen2.5-3B-Instruct-GGUF",
-        "file": "Qwen2.5-3B-Instruct-Q4_K_M.gguf",
-        "description": "Qwen2.5 3B Q4_K_M - Great quality for 6GB cards",
+        "repo": "bartowski/Dolphin3.0-Llama3.2-3B-GGUF",
+        "file": "Dolphin3.0-Llama3.2-3B-Q8_0.gguf",
+        "description": "Dolphin 3.0 3B Q8 - Uncensored, high quality",
         "vram": "~4GB",
         "n_ctx": 4096,
     },
     "8GB VRAM (RTX 3070, RTX 4060)": {
-        "repo": "TheBloke/dolphin-2.6-mistral-7B-GGUF",
-        "file": "dolphin-2.6-mistral-7b.Q4_K_M.gguf",
-        "description": "Dolphin Mistral 7B Q4_K_M - Excellent prompt generation",
+        "repo": "bartowski/Dolphin3.0-Llama3.1-8B-GGUF",
+        "file": "Dolphin3.0-Llama3.1-8B-Q4_K_M.gguf",
+        "description": "Dolphin 3.0 8B Q4_K_M - Uncensored, excellent",
         "vram": "~6GB",
-        "n_ctx": 4096,
+        "n_ctx": 8192,
     },
     "12GB VRAM (RTX 3060 12GB, RTX 4070)": {
-        "repo": "bartowski/Qwen2.5-7B-Instruct-GGUF",
-        "file": "Qwen2.5-7B-Instruct-Q6_K_L.gguf",
-        "description": "Qwen2.5 7B Q6_K_L - High quality, better reasoning",
+        "repo": "bartowski/Dolphin3.0-Llama3.1-8B-GGUF",
+        "file": "Dolphin3.0-Llama3.1-8B-Q6_K_L.gguf",
+        "description": "Dolphin 3.0 8B Q6_K_L - Uncensored, premium",
         "vram": "~10GB",
         "n_ctx": 8192,
     },
     "16GB+ VRAM (RTX 4080, RTX 4090)": {
-        "repo": "bartowski/Qwen2.5-14B-Instruct-GGUF",
-        "file": "Qwen2.5-14B-Instruct-Q4_K_M.gguf",
-        "description": "Qwen2.5 14B Q4_K_M - Premium quality prompts",
+        "repo": "bartowski/Dolphin3.0-Llama3.1-8B-GGUF",
+        "file": "Dolphin3.0-Llama3.1-8B-Q8_0.gguf",
+        "description": "Dolphin 3.0 8B Q8 - Uncensored, maximum quality",
         "vram": "~12GB",
         "n_ctx": 8192,
     },
     "24GB+ VRAM (RTX 3090, RTX 4090)": {
-        "repo": "bartowski/Qwen2.5-14B-Instruct-GGUF",
-        "file": "Qwen2.5-14B-Instruct-Q8_0.gguf",
-        "description": "Qwen2.5 14B Q8 - Maximum quality",
-        "vram": "~18GB",
-        "n_ctx": 8192,
+        "repo": "bartowski/dolphin-2.9.4-llama3.1-8b-GGUF",
+        "file": "dolphin-2.9.4-llama3.1-8b-Q8_0.gguf",
+        "description": "Dolphin 2.9.4 8B Q8 - Uncensored, maximum precision",
+        "vram": "~10GB",
+        "n_ctx": 131072,
     },
 }
 
@@ -1786,6 +1786,7 @@ def load_model(
         n_ctx=n_ctx,
         n_batch=512,
         verbose=False,
+        chat_format="llama-3",
     )
     current_model_key = model_key
     print("Model loaded successfully!")
@@ -1841,10 +1842,11 @@ def generate_prompt(
         yield f"Error loading model: {e!s}"
         return
 
-    # Format as chat
+    # Format as chat with explicit instruction wrapper
+    user_message = f"Generate a prompt for the following idea:\n\n{user_idea}\n\nRemember: Output ONLY the final prompt, nothing else."
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_idea},
+        {"role": "user", "content": user_message},
     ]
 
     try:
