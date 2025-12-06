@@ -5,9 +5,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 **PromptMill** - A self-contained Gradio web UI with **selectable LLMs based on GPU VRAM** for generating optimized prompts for:
-- **Video**: Wan2.1, Wan2.2, Hunyuan Video, Hunyuan Video 1.5
-- **Image**: Stable Diffusion, Midjourney, FLUX, DALL-E 3, ComfyUI
-- **Creative**: Story writing, code generation, technical docs, marketing, SEO
+- **Video**: Wan2.1, Wan2.2, Hunyuan, Runway, Kling, Pika, Luma, Sora, Veo
+- **Image**: Stable Diffusion, Midjourney, FLUX, DALL-E, ComfyUI, Ideogram, Leonardo, Firefly, Recraft, Imagen
+- **Audio**: Suno AI, Udio, ElevenLabs
+- **3D**: Meshy, Tripo AI
+- **Creative**: Story, code, technical docs, marketing, SEO, screenplays, social media, podcasts, UX, and more
 
 ## Commands
 
@@ -53,7 +55,7 @@ Single-file application (`app.py`) with:
 - **Model Management**: `load_model()` handles lazy loading, `unload_model()` frees memory when switching models
 - **Model Cleanup**: `get_downloaded_models()`, `delete_model()`, `delete_all_models()` for disk space management
 - **GPU Detection**: `detect_gpu()` checks for NVIDIA GPU via `nvidia-smi`, sets `n_gpu_layers` accordingly
-- **Role System**: `ROLES` dict defines 34 presets for video, image, audio, 3D, and creative tasks
+- **Role System**: `ROLES` dict defines 44 presets for video, image, audio, 3D, and creative tasks
 - **Streaming Generation**: `generate_prompt()` yields tokens progressively using llama-cpp-python's chat completion API
 - **UI**: Gradio Blocks interface with target model dropdown, LLM selector, and generation settings
 

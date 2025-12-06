@@ -26,7 +26,7 @@ PromptMill is a self-contained web UI that runs **entirely locally** - no API ke
 <div align="center">
 <table>
 <tr>
-<td align="center"><b>34</b><br><sub>Preset Roles</sub></td>
+<td align="center"><b>44</b><br><sub>Preset Roles</sub></td>
 <td align="center"><b>7</b><br><sub>LLM Options</sub></td>
 <td align="center"><b>0.5B-14B</b><br><sub>Parameters</sub></td>
 <td align="center"><b>100%</b><br><sub>Local</sub></td>
@@ -40,7 +40,7 @@ PromptMill is a self-contained web UI that runs **entirely locally** - no API ke
 
 - **Smart GPU Detection** - Automatically selects the best model for your VRAM
 - **7 LLM Tiers** - From 0.5B (CPU) to 14B parameters (24GB+ VRAM)
-- **34 Specialized Roles** - Video, image, audio, 3D, and creative
+- **44 Specialized Roles** - Video, image, audio, 3D, and creative
 - **Dark Mode UI** - Modern interface with streaming generation
 - **Model Cleanup** - Delete downloaded models to free disk space
 - **Zero Config** - Works out of the box with Docker
@@ -100,8 +100,8 @@ Suno AI, Udio, ElevenLabs
 ### 🧊 3D (2)
 Meshy, Tripo AI
 
-### ✍️ Creative (9)
-Story Writer, Code Generator, Technical Writer, Marketing Copy, SEO Content, Screenplay Writer, Social Media Manager, Video Script Writer, Song Lyrics
+### ✍️ Creative (19)
+Story Writer, Code Generator, Technical Writer, Marketing Copy, SEO Content, Screenplay Writer, Social Media Manager, Video Script Writer, Song Lyrics, Email Copywriter, Product Description, Podcast Script, Resume Writer, Cover Letter, Speech Writer, Game Narrative, UX Writer, Press Release, Poetry Writer
 
 </td>
 </tr>
