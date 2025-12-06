@@ -1,10 +1,10 @@
 services:
   # GPU version - use with: docker compose --profile gpu up -d
-  prompt-generator-gpu:
+  prompt-generator:
     build:
       context: .
       dockerfile: Dockerfile.gpu
-    container_name: prompt-generator-gpu
+    container_name: prompt-generator
     profiles: ["gpu"]
     ports:
       - "7610:7610"
@@ -19,12 +19,13 @@ services:
               count: 1
               capabilities: [gpu]
 
-  # CPU version - default, starts with: docker compose up -d
-  prompt-generator:
+  # CPU version - use with: docker compose --profile cpu up -d
+  prompt-generator-cpu:
     build:
       context: .
       dockerfile: Dockerfile.cpu
     container_name: prompt-generator
+    profiles: ["cpu"]
     ports:
       - "7610:7610"
     volumes:
