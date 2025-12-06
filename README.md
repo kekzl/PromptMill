@@ -9,6 +9,7 @@
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![Gradio](https://img.shields.io/badge/Gradio-4.x-FF6F00?style=flat-square&logo=gradio&logoColor=white)](https://gradio.app)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://docker.com)
+[![Ruff](https://img.shields.io/badge/Ruff-Linted-D7FF64?style=flat-square&logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/kekzl/PromptMill?style=flat-square&logo=github)](https://github.com/kekzl/PromptMill)
 
@@ -148,13 +149,31 @@ Manual override available in the UI for GPU layers and model selection.
 ```
 PromptMill/
 ├── app.py              # Main application
+├── pyproject.toml      # Project config & dependencies
 ├── assets/
 │   └── logo.svg        # Logo
 ├── Dockerfile.gpu      # CUDA build
 ├── Dockerfile.cpu      # CPU build
 ├── docker-compose.yml  # Docker orchestration
-├── requirements.txt    # Python deps
 └── models/             # Downloaded LLMs (persisted)
+```
+
+---
+
+## 🛠️ Development
+
+Requires [uv](https://docs.astral.sh/uv/) (recommended) or pip.
+
+```bash
+# Install dependencies
+uv sync
+
+# Run with uv
+uv run python app.py
+
+# Lint & format
+uv run ruff check --fix
+uv run ruff format
 ```
 
 ---

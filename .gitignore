@@ -7,6 +7,12 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
+dist/
+build/
+*.egg
+
+# uv
+uv.lock
 
 # IDE
 .idea/
@@ -16,3 +22,7 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Misc
+*.log
+.ruff_cache/

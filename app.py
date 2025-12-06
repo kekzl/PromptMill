@@ -17,13 +17,17 @@ Features:
 - Streaming text generation
 """
 
-import gradio as gr
 import base64
+import gc
 import os
+import shutil
 import subprocess
 import threading
+from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import Generator
+from typing import Any
+
+import gradio as gr
 from huggingface_hub import hf_hub_download
 
 # Version
@@ -104,14 +108,15 @@ def detect_gpu() -> tuple[bool, int, str]:
     try:
         # Query GPU memory and name
         result = subprocess.run(
-            ['nvidia-smi', '--query-gpu=memory.total,name', '--format=csv,noheader,nounits'],
+            ["nvidia-smi", "--query-gpu=memory.total,name", "--format=csv,noheader,nounits"],
+            check=False,
             capture_output=True,
             text=True,
-            timeout=5
+            timeout=5,
         )
         if result.returncode == 0 and result.stdout.strip():
-            line = result.stdout.strip().split('\n')[0]  # First GPU
-            parts = line.split(', ')
+            line = result.stdout.strip().split("\n")[0]  # First GPU
+            parts = line.split(", ")
             vram_mb = int(parts[0].strip())
             gpu_name = parts[1].strip() if len(parts) > 1 else "Unknown GPU"
             return True, vram_mb, gpu_name
@@ -183,7 +188,6 @@ Best Practices:
 Output Format:
 Provide ONE cohesive prompt as a single paragraph, prioritizing the most important visual elements first. Output ONLY the prompt, no explanations or preamble.""",
     },
-
     "Wan2.2": {
         "category": "Video",
         "name": "Wan2.2 Video",
@@ -220,7 +224,6 @@ Best Practices:
 Output Format:
 Provide ONE cohesive, detailed prompt as a flowing paragraph. Front-load the most critical visual elements. Output ONLY the prompt, no explanations or preamble.""",
     },
-
     "Hunyuan Video": {
         "category": "Video",
         "name": "Hunyuan Video",
@@ -245,7 +248,6 @@ Best Practices:
 Output Format:
 Provide ONE cohesive prompt as a single paragraph. Output ONLY the prompt, no explanations.""",
     },
-
     "Hunyuan Video 1.5": {
         "category": "Video",
         "name": "Hunyuan Video 1.5",
@@ -296,7 +298,6 @@ Motion Quality Keywords:
 Output Format:
 Provide ONE cohesive prompt as a detailed paragraph. For image-to-video requests, assume the user will provide the reference image separately and focus your prompt on describing the desired animation. Output ONLY the prompt, no explanations.""",
     },
-
     # --- Image Generation ---
     "Stable Diffusion": {
         "category": "Image",
@@ -326,7 +327,6 @@ Best Practices:
 Output Format:
 Provide a positive prompt optimized for Stable Diffusion. Output ONLY the prompt, no explanations.""",
     },
-
     "Midjourney": {
         "category": "Image",
         "name": "Midjourney",
@@ -350,7 +350,6 @@ Midjourney Best Practices:
 Output Format:
 Provide a Midjourney-optimized prompt. Include suggested parameters at the end (like --ar 16:9 --v 6). Output ONLY the prompt.""",
     },
-
     "FLUX": {
         "category": "Image",
         "name": "FLUX",
@@ -374,7 +373,6 @@ FLUX Strengths to Leverage:
 Output Format:
 Provide a detailed, natural language prompt optimized for FLUX. Output ONLY the prompt, no explanations.""",
     },
-
     "DALL-E 3": {
         "category": "Image",
         "name": "DALL-E 3",
@@ -399,7 +397,6 @@ DALL-E 3 Best Practices:
 Output Format:
 Provide a detailed, natural language prompt optimized for DALL-E 3. Output ONLY the prompt, no explanations.""",
     },
-
     "ComfyUI": {
         "category": "Image",
         "name": "ComfyUI Workflow",
@@ -429,7 +426,6 @@ NEGATIVE:
 
 Output ONLY the prompts in this format, no other explanations.""",
     },
-
     # --- Creative & Coding ---
     "Story Writer": {
         "category": "Creative",
@@ -454,7 +450,6 @@ Writing Style:
 Output Format:
 Provide creative writing content based on the user's request. This could be a scene, story opening, character description, or narrative outline depending on what they ask for.""",
     },
-
     "Code Generator": {
         "category": "Creative",
         "name": "Code Generator",
@@ -479,7 +474,6 @@ Code Quality Standards:
 Output Format:
 Provide code with brief explanations. Include the programming language at the top of code blocks.""",
     },
-
     "Technical Writer": {
         "category": "Creative",
         "name": "Technical Writer",
@@ -504,7 +498,6 @@ Writing Style:
 Output Format:
 Provide well-structured documentation in Markdown format. Include appropriate headers, code blocks, and formatting.""",
     },
-
     "Marketing Copy": {
         "category": "Creative",
         "name": "Marketing Copy",
@@ -530,7 +523,6 @@ Content Types:
 Output Format:
 Provide marketing copy tailored to the requested platform/format. Include multiple variations when appropriate.""",
     },
-
     "SEO Content": {
         "category": "Creative",
         "name": "SEO Content",
@@ -561,6 +553,7 @@ Provide SEO-optimized content with suggested meta title and description. Use Mar
 # THEME AND BRANDING
 # =============================================================================
 
+
 def get_logo_html() -> str:
     """Load and return the logo as an HTML img tag with embedded SVG."""
     logo_path = Path(__file__).parent / "assets" / "logo.svg"
@@ -571,7 +564,7 @@ def get_logo_html() -> str:
     return '<h1 style="margin: 0; color: #818cf8;">PromptMill</h1>'
 
 
-def create_theme():
+def create_theme() -> gr.themes.Base:
     """Create a custom dark theme for the UI."""
     return gr.themes.Base(
         primary_hue=gr.themes.colors.indigo,
@@ -620,7 +613,7 @@ def create_theme():
 
 
 # Get list of role names grouped by category
-def get_role_choices():
+def get_role_choices() -> list[str]:
     """Get role choices grouped by category for dropdown."""
     choices = []
     categories = {}
@@ -653,7 +646,7 @@ def check_model_exists(model_key: str) -> bool:
 
 def format_size(size_bytes: int) -> str:
     """Format bytes to human readable size."""
-    for unit in ['B', 'KB', 'MB', 'GB']:
+    for unit in ["B", "KB", "MB", "GB"]:
         if size_bytes < 1024:
             return f"{size_bytes:.1f} {unit}"
         size_bytes /= 1024
@@ -667,21 +660,23 @@ def get_downloaded_models() -> list[dict]:
         model_path = MODELS_DIR / config["file"]
         if model_path.exists():
             size = model_path.stat().st_size
-            downloaded.append({
-                "key": model_key,
-                "file": config["file"],
-                "description": config["description"],
-                "size": size,
-                "size_formatted": format_size(size),
-                "path": model_path
-            })
+            downloaded.append(
+                {
+                    "key": model_key,
+                    "file": config["file"],
+                    "description": config["description"],
+                    "size": size,
+                    "size_formatted": format_size(size),
+                    "path": model_path,
+                }
+            )
     return downloaded
 
 
 def get_models_disk_usage() -> tuple[int, str]:
     """Get total disk usage of downloaded models."""
     total = 0
-    for model_key, config in MODEL_CONFIGS.items():
+    for config in MODEL_CONFIGS.values():
         model_path = MODELS_DIR / config["file"]
         if model_path.exists():
             total += model_path.stat().st_size
@@ -709,7 +704,7 @@ def delete_model(model_key: str) -> tuple[bool, str]:
         print(f"Deleted model: {config['file']}")
         return True, f"Deleted: {config['description']}"
     except Exception as e:
-        return False, f"Error deleting model: {str(e)}"
+        return False, f"Error deleting model: {e!s}"
 
 
 def delete_all_models() -> tuple[int, str]:
@@ -723,7 +718,7 @@ def delete_all_models() -> tuple[int, str]:
     deleted_count = 0
     total_freed = 0
 
-    for model_key, config in MODEL_CONFIGS.items():
+    for config in MODEL_CONFIGS.values():
         model_path = MODELS_DIR / config["file"]
         if model_path.exists():
             try:
@@ -739,8 +734,7 @@ def delete_all_models() -> tuple[int, str]:
     cache_dir = MODELS_DIR / ".cache"
     if cache_dir.exists():
         try:
-            import shutil
-            cache_size = sum(f.stat().st_size for f in cache_dir.rglob('*') if f.is_file())
+            cache_size = sum(f.stat().st_size for f in cache_dir.rglob("*") if f.is_file())
             shutil.rmtree(cache_dir)
             total_freed += cache_size
             print("Cleaned HuggingFace cache")
@@ -750,7 +744,7 @@ def delete_all_models() -> tuple[int, str]:
     return deleted_count, format_size(total_freed)
 
 
-def get_model_path(model_key: str, progress_callback=None) -> Path:
+def get_model_path(model_key: str, progress_callback: Callable[[str], None] | None = None) -> Path:
     """Get the path to the model file, downloading if necessary."""
     config = MODEL_CONFIGS.get(model_key, MODEL_CONFIGS[DEFAULT_MODEL])
     model_file = config["file"]
@@ -763,22 +757,24 @@ def get_model_path(model_key: str, progress_callback=None) -> Path:
         print(f"Downloading model {model_file} from {model_repo}...")
         print("This may take a few minutes on first run...")
         if progress_callback:
-            progress_callback(f"⬇️ Downloading {config['description']}...\n\nThis may take a few minutes on first run.")
+            progress_callback(
+                f"⬇️ Downloading {config['description']}...\n\nThis may take a few minutes on first run."
+            )
         downloaded_path = hf_hub_download(
             repo_id=model_repo,
             filename=model_file,
             local_dir=MODELS_DIR,
-            local_dir_use_symlinks=False
+            local_dir_use_symlinks=False,
         )
         model_path = Path(downloaded_path)
         print(f"Model downloaded to {model_path}")
         if progress_callback:
-            progress_callback(f"✅ Download complete! Loading model...")
+            progress_callback("✅ Download complete! Loading model...")
 
     return model_path
 
 
-def unload_model():
+def unload_model() -> None:
     """Unload the current model to free memory."""
     global llm, current_model_key
     if llm is not None:
@@ -787,15 +783,11 @@ def unload_model():
         llm = None
         current_model_key = None
         # Try to free GPU memory
-        try:
-            import gc
-            gc.collect()
-        except Exception:
-            pass
+        gc.collect()
         print(f"Model unloaded: {model_name}")
 
 
-def cancel_unload_timer():
+def cancel_unload_timer() -> None:
     """Cancel any pending auto-unload timer."""
     global unload_timer
     if unload_timer is not None:
@@ -803,7 +795,7 @@ def cancel_unload_timer():
         unload_timer = None
 
 
-def schedule_unload():
+def schedule_unload() -> None:
     """Schedule the model to be unloaded after UNLOAD_DELAY_SECONDS."""
     global unload_timer
     cancel_unload_timer()
@@ -813,7 +805,7 @@ def schedule_unload():
     print(f"Model will auto-unload in {UNLOAD_DELAY_SECONDS} seconds...")
 
 
-def auto_unload_model():
+def auto_unload_model() -> None:
     """Auto-unload callback triggered by timer."""
     global unload_timer
     unload_timer = None
@@ -822,7 +814,9 @@ def auto_unload_model():
         unload_model()
 
 
-def load_model(model_key: str, n_gpu_layers: int = -1, progress_callback=None):
+def load_model(
+    model_key: str, n_gpu_layers: int = -1, progress_callback: Callable[[str], None] | None = None
+) -> Any:
     """Load the LLM model."""
     global llm, current_model_key
 
@@ -857,7 +851,7 @@ def load_model(model_key: str, n_gpu_layers: int = -1, progress_callback=None):
         n_gpu_layers=n_gpu_layers,
         n_ctx=n_ctx,
         n_batch=512,
-        verbose=False
+        verbose=False,
     )
     current_model_key = model_key
     print("Model loaded successfully!")
@@ -905,32 +899,25 @@ def generate_prompt(
     # Ensure model is loaded
     try:
         model = load_model(
-            model_key=model_choice,
-            n_gpu_layers=n_gpu_layers,
-            progress_callback=update_status
+            model_key=model_choice, n_gpu_layers=n_gpu_layers, progress_callback=update_status
         )
         if needs_download:
             yield "✅ Model ready! Generating prompt..."
     except Exception as e:
-        yield f"Error loading model: {str(e)}"
+        yield f"Error loading model: {e!s}"
         return
 
     # Format as chat
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_idea}
+        {"role": "user", "content": user_idea},
     ]
 
     try:
         full_response = ""
-        chunk_count = 0
         for chunk in model.create_chat_completion(
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            stream=True
+            messages=messages, temperature=temperature, max_tokens=max_tokens, stream=True
         ):
-            chunk_count += 1
             delta = chunk.get("choices", [{}])[0].get("delta", {})
             content = delta.get("content", "")
             if content:
@@ -943,7 +930,7 @@ def generate_prompt(
                 hints.append("Set GPU Layers to 0 (CPU mode)")
             hints.append("Try increasing temperature")
             hints.append("Try a shorter input")
-            yield f"No response generated. Try:\n- " + "\n- ".join(hints)
+            yield "No response generated. Try:\n- " + "\n- ".join(hints)
 
         # Schedule auto-unload after generation completes
         schedule_unload()
@@ -951,14 +938,14 @@ def generate_prompt(
     except RuntimeError as e:
         error_msg = str(e).lower()
         if "memory" in error_msg or "cuda" in error_msg or "gpu" in error_msg:
-            yield f"GPU/Memory error: {str(e)}\n\nTry setting GPU Layers to 0 for CPU-only mode."
+            yield f"GPU/Memory error: {e!s}\n\nTry setting GPU Layers to 0 for CPU-only mode."
         else:
-            yield f"Runtime error: {str(e)}"
+            yield f"Runtime error: {e!s}"
     except Exception as e:
-        yield f"Error generating prompt: {str(e)}\n\nIf this persists, try restarting the application."
+        yield f"Error generating prompt: {e!s}\n\nIf this persists, try restarting the application."
 
 
-def create_ui():
+def create_ui() -> gr.Blocks:
     """Create the Gradio interface."""
 
     role_choices = get_role_choices()
@@ -994,12 +981,14 @@ def create_ui():
                     label="Target AI Model",
                     choices=role_choices,
                     value=role_choices[0] if role_choices else None,
-                    info="Select the AI model you're generating prompts for"
+                    info="Select the AI model you're generating prompts for",
                 )
 
                 # Role description display
                 role_info = gr.Markdown(
-                    value=f"**{ROLES[parse_role_choice(role_choices[0])]['description']}**" if role_choices else ""
+                    value=f"**{ROLES[parse_role_choice(role_choices[0])]['description']}**"
+                    if role_choices
+                    else ""
                 )
 
                 # Main input
@@ -1007,7 +996,7 @@ def create_ui():
                     label="Your Idea / Request",
                     placeholder="Describe what you want to create, or click an example below...",
                     lines=5,
-                    max_lines=10
+                    max_lines=10,
                 )
 
                 # Example buttons
@@ -1029,14 +1018,16 @@ def create_ui():
                     lines=10,
                     max_lines=20,
                     show_copy_button=True,
-                    info="Copy this prompt to use with your AI model"
+                    info="Copy this prompt to use with your AI model",
                 )
 
             with gr.Column(scale=1):
                 # Show auto-detection status
                 if HAS_GPU and GPU_VRAM_MB > 0:
                     vram_gb = GPU_VRAM_MB / 1024
-                    gr.Markdown(f"### LLM for Prompt Generation\n*Auto-detected: {vram_gb:.0f}GB VRAM*")
+                    gr.Markdown(
+                        f"### LLM for Prompt Generation\n*Auto-detected: {vram_gb:.0f}GB VRAM*"
+                    )
                 else:
                     gr.Markdown("### LLM for Prompt Generation\n*No GPU detected - using CPU*")
 
@@ -1045,7 +1036,9 @@ def create_ui():
                     label="Select by Your GPU VRAM",
                     choices=model_choices,
                     value=DEFAULT_MODEL,
-                    info="Auto-selected based on detected VRAM" if HAS_GPU else "Select manually or use CPU model"
+                    info="Auto-selected based on detected VRAM"
+                    if HAS_GPU
+                    else "Select manually or use CPU model",
                 )
 
                 # Model description display
@@ -1061,7 +1054,7 @@ def create_ui():
                     maximum=2.0,
                     value=0.7,
                     step=0.1,
-                    info="0.3-0.5 precise, 0.7-1.0 creative, 1.0+ experimental"
+                    info="0.3-0.5 precise, 0.7-1.0 creative, 1.0+ experimental",
                 )
 
                 max_tokens = gr.Slider(
@@ -1070,7 +1063,7 @@ def create_ui():
                     maximum=2000,
                     value=256,
                     step=50,
-                    info="Video prompts: 150-300, Image prompts: 75-150"
+                    info="Video prompts: 150-300, Image prompts: 75-150",
                 )
 
                 gr.Markdown("### Advanced")
@@ -1081,7 +1074,7 @@ def create_ui():
                     maximum=100,
                     value=DEFAULT_GPU_LAYERS,
                     step=1,
-                    info="-1 = all layers on GPU, 0 = CPU only"
+                    info="-1 = all layers on GPU, 0 = CPU only",
                 )
 
                 # Model Management Section
@@ -1093,16 +1086,15 @@ def create_ui():
                         delete_all_btn = gr.Button("Delete All", size="sm", variant="stop")
 
                     model_to_delete = gr.Dropdown(
-                        label="Select Model to Delete",
-                        choices=[],
-                        interactive=True,
-                        visible=False
+                        label="Select Model to Delete", choices=[], interactive=True, visible=False
                     )
-                    delete_one_btn = gr.Button("Delete Selected", size="sm", variant="stop", visible=False)
+                    delete_one_btn = gr.Button(
+                        "Delete Selected", size="sm", variant="stop", visible=False
+                    )
                     cleanup_result = gr.Markdown(visible=False)
 
                 gr.HTML(
-                    f"""
+                    """
                     <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #475569;">
                         <p style="color: #64748b; font-size: 12px; margin: 0;">
                             Models auto-download on first use<br>
@@ -1138,17 +1130,9 @@ def create_ui():
                 return f"**{config['description']}**\n\nVRAM usage: {config['vram']}"
             return ""
 
-        role_dropdown.change(
-            fn=update_role_info,
-            inputs=[role_dropdown],
-            outputs=[role_info]
-        )
+        role_dropdown.change(fn=update_role_info, inputs=[role_dropdown], outputs=[role_info])
 
-        model_dropdown.change(
-            fn=update_model_info,
-            inputs=[model_dropdown],
-            outputs=[model_info]
-        )
+        model_dropdown.change(fn=update_model_info, inputs=[model_dropdown], outputs=[model_info])
 
         # Example button handlers
         example_prompts = {
@@ -1170,14 +1154,28 @@ def create_ui():
         # Event handlers
         generate_btn.click(
             fn=generate_prompt,
-            inputs=[user_idea, role_dropdown, model_dropdown, temperature, max_tokens, n_gpu_layers],
-            outputs=output
+            inputs=[
+                user_idea,
+                role_dropdown,
+                model_dropdown,
+                temperature,
+                max_tokens,
+                n_gpu_layers,
+            ],
+            outputs=output,
         )
 
         user_idea.submit(
             fn=generate_prompt,
-            inputs=[user_idea, role_dropdown, model_dropdown, temperature, max_tokens, n_gpu_layers],
-            outputs=output
+            inputs=[
+                user_idea,
+                role_dropdown,
+                model_dropdown,
+                temperature,
+                max_tokens,
+                n_gpu_layers,
+            ],
+            outputs=output,
         )
 
         # Model Management handlers
@@ -1189,22 +1187,22 @@ def create_ui():
                     "**No models downloaded yet**\n\nModels will be downloaded on first use.",
                     gr.update(choices=[], visible=False),
                     gr.update(visible=False),
-                    gr.update(visible=False)
+                    gr.update(visible=False),
                 )
 
-            total_bytes, total_formatted = get_models_disk_usage()
+            _, total_formatted = get_models_disk_usage()
             lines = [f"**Downloaded Models** ({len(downloaded)} models, {total_formatted} total)\n"]
             choices = []
 
             for model in downloaded:
                 lines.append(f"- **{model['description']}** ({model['size_formatted']})")
-                choices.append(model['key'])
+                choices.append(model["key"])
 
             return (
                 "\n".join(lines),
                 gr.update(choices=choices, visible=True, value=None),
                 gr.update(visible=True),
-                gr.update(visible=False)
+                gr.update(visible=False),
             )
 
         def handle_delete_one(model_key):
@@ -1228,30 +1226,26 @@ def create_ui():
 
         refresh_models_btn.click(
             fn=refresh_models_list,
-            outputs=[models_status, model_to_delete, delete_one_btn, cleanup_result]
+            outputs=[models_status, model_to_delete, delete_one_btn, cleanup_result],
         )
 
         delete_one_btn.click(
-            fn=handle_delete_one,
-            inputs=[model_to_delete],
-            outputs=[cleanup_result]
+            fn=handle_delete_one, inputs=[model_to_delete], outputs=[cleanup_result]
         ).then(
             fn=refresh_models_list,
-            outputs=[models_status, model_to_delete, delete_one_btn, cleanup_result]
+            outputs=[models_status, model_to_delete, delete_one_btn, cleanup_result],
         )
 
-        delete_all_btn.click(
-            fn=handle_delete_all,
-            outputs=[cleanup_result]
-        ).then(
+        delete_all_btn.click(fn=handle_delete_all, outputs=[cleanup_result]).then(
             fn=refresh_models_list,
-            outputs=[models_status, model_to_delete, delete_one_btn, cleanup_result]
+            outputs=[models_status, model_to_delete, delete_one_btn, cleanup_result],
         )
 
     return app
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Main entry point for PromptMill."""
     print("=" * 50)
     print(f"PromptMill v{__version__}")
     print("AI Prompt Generator")
@@ -1267,9 +1261,8 @@ if __name__ == "__main__":
     print("Starting server...")
 
     app = create_ui()
-    app.launch(
-        server_name="0.0.0.0",
-        server_port=7610,
-        share=False,
-        show_error=True
-    )
+    app.launch(server_name="0.0.0.0", server_port=7610, share=False, show_error=True)
+
+
+if __name__ == "__main__":
+    main()
