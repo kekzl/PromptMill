@@ -26,7 +26,7 @@ PromptMill is a self-contained web UI that runs **entirely locally** - no API ke
 <div align="center">
 <table>
 <tr>
-<td align="center"><b>14</b><br><sub>Preset Roles</sub></td>
+<td align="center"><b>34</b><br><sub>Preset Roles</sub></td>
 <td align="center"><b>7</b><br><sub>LLM Options</sub></td>
 <td align="center"><b>0.5B-14B</b><br><sub>Parameters</sub></td>
 <td align="center"><b>100%</b><br><sub>Local</sub></td>
@@ -40,7 +40,7 @@ PromptMill is a self-contained web UI that runs **entirely locally** - no API ke
 
 - **Smart GPU Detection** - Automatically selects the best model for your VRAM
 - **7 LLM Tiers** - From 0.5B (CPU) to 14B parameters (24GB+ VRAM)
-- **14 Specialized Roles** - Optimized prompts for each target AI
+- **34 Specialized Roles** - Video, image, audio, 3D, and creative
 - **Dark Mode UI** - Modern interface with streaming generation
 - **Model Cleanup** - Delete downloaded models to free disk space
 - **Zero Config** - Works out of the box with Docker
@@ -83,33 +83,25 @@ python app.py
 
 <table>
 <tr>
-<td width="33%">
+<td width="50%">
 
-### 🎬 Video
-- **Wan2.1** - Cinematic text-to-video
-- **Wan2.2** - Enhanced motion & physics
-- **Hunyuan Video** - Tencent T2V
-- **Hunyuan 1.5** - Extended duration + I2V
+### 🎬 Video (10)
+Wan2.1, Wan2.2, Hunyuan Video, Hunyuan 1.5, Runway Gen-3, Kling AI, Pika Labs, Luma Dream Machine, Sora, Veo
 
-</td>
-<td width="33%">
-
-### 🖼️ Image
-- **Stable Diffusion** - SD/SDXL
-- **Midjourney** - Artistic style
-- **FLUX** - Black Forest Labs
-- **DALL-E 3** - OpenAI
-- **ComfyUI** - Workflow prompts
+### 🖼️ Image (10)
+Stable Diffusion, Midjourney, FLUX, DALL-E 3, ComfyUI, Ideogram, Leonardo AI, Adobe Firefly, Recraft, Imagen 3
 
 </td>
-<td width="33%">
+<td width="50%">
 
-### ✍️ Creative
-- **Story Writer** - Narratives
-- **Code Generator** - Programming
-- **Technical Writer** - Docs
-- **Marketing Copy** - Ads & CTAs
-- **SEO Content** - Blog posts
+### 🔊 Audio (3)
+Suno AI, Udio, ElevenLabs
+
+### 🧊 3D (2)
+Meshy, Tripo AI
+
+### ✍️ Creative (9)
+Story Writer, Code Generator, Technical Writer, Marketing Copy, SEO Content, Screenplay Writer, Social Media Manager, Video Script Writer, Song Lyrics
 
 </td>
 </tr>

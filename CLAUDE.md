@@ -53,7 +53,7 @@ Single-file application (`app.py`) with:
 - **Model Management**: `load_model()` handles lazy loading, `unload_model()` frees memory when switching models
 - **Model Cleanup**: `get_downloaded_models()`, `delete_model()`, `delete_all_models()` for disk space management
 - **GPU Detection**: `detect_gpu()` checks for NVIDIA GPU via `nvidia-smi`, sets `n_gpu_layers` accordingly
-- **Role System**: `ROLES` dict defines 14 presets for video, image, and creative tasks
+- **Role System**: `ROLES` dict defines 34 presets for video, image, audio, 3D, and creative tasks
 - **Streaming Generation**: `generate_prompt()` yields tokens progressively using llama-cpp-python's chat completion API
 - **UI**: Gradio Blocks interface with target model dropdown, LLM selector, and generation settings
 
