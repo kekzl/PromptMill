@@ -651,6 +651,105 @@ def check_model_exists(model_key: str) -> bool:
     return model_path.exists()
 
 
+def format_size(size_bytes: int) -> str:
+    """Format bytes to human readable size."""
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if size_bytes < 1024:
+            return f"{size_bytes:.1f} {unit}"
+        size_bytes /= 1024
+    return f"{size_bytes:.1f} TB"
+
+
+def get_downloaded_models() -> list[dict]:
+    """Get list of downloaded models with their info."""
+    downloaded = []
+    for model_key, config in MODEL_CONFIGS.items():
+        model_path = MODELS_DIR / config["file"]
+        if model_path.exists():
+            size = model_path.stat().st_size
+            downloaded.append({
+                "key": model_key,
+                "file": config["file"],
+                "description": config["description"],
+                "size": size,
+                "size_formatted": format_size(size),
+                "path": model_path
+            })
+    return downloaded
+
+
+def get_models_disk_usage() -> tuple[int, str]:
+    """Get total disk usage of downloaded models."""
+    total = 0
+    for model_key, config in MODEL_CONFIGS.items():
+        model_path = MODELS_DIR / config["file"]
+        if model_path.exists():
+            total += model_path.stat().st_size
+    return total, format_size(total)
+
+
+def delete_model(model_key: str) -> tuple[bool, str]:
+    """Delete a specific downloaded model."""
+    global llm, current_model_key
+
+    config = MODEL_CONFIGS.get(model_key)
+    if not config:
+        return False, f"Unknown model: {model_key}"
+
+    model_path = MODELS_DIR / config["file"]
+    if not model_path.exists():
+        return False, f"Model not downloaded: {model_key}"
+
+    # Unload if this is the current model
+    if current_model_key == model_key:
+        unload_model()
+
+    try:
+        model_path.unlink()
+        print(f"Deleted model: {config['file']}")
+        return True, f"Deleted: {config['description']}"
+    except Exception as e:
+        return False, f"Error deleting model: {str(e)}"
+
+
+def delete_all_models() -> tuple[int, str]:
+    """Delete all downloaded models."""
+    global llm, current_model_key
+
+    # Unload current model first
+    if llm is not None:
+        unload_model()
+
+    deleted_count = 0
+    total_freed = 0
+
+    for model_key, config in MODEL_CONFIGS.items():
+        model_path = MODELS_DIR / config["file"]
+        if model_path.exists():
+            try:
+                size = model_path.stat().st_size
+                model_path.unlink()
+                deleted_count += 1
+                total_freed += size
+                print(f"Deleted: {config['file']}")
+            except Exception as e:
+                print(f"Error deleting {config['file']}: {e}")
+
+    # Also clean up HuggingFace cache if exists
+    cache_dir = MODELS_DIR / ".cache"
+    if cache_dir.exists():
+        try:
+            import shutil
+            cache_size = sum(f.stat().st_size for f in cache_dir.rglob('*') if f.is_file())
+            shutil.rmtree(cache_dir)
+            total_freed += cache_size
+            print("Cleaned HuggingFace cache")
+        except Exception as e:
+            print(f"Error cleaning cache: {e}")
+
+    return deleted_count, format_size(total_freed)
+
+
 def get_model_path(model_key: str, progress_callback=None) -> Path:
     """Get the path to the model file, downloading if necessary."""
     config = MODEL_CONFIGS.get(model_key, MODEL_CONFIGS[DEFAULT_MODEL])
@@ -985,6 +1084,23 @@ def create_ui():
                     info="-1 = all layers on GPU, 0 = CPU only"
                 )
 
+                # Model Management Section
+                with gr.Accordion("Model Management", open=False):
+                    models_status = gr.Markdown(value="Click refresh to see downloaded models")
+
+                    with gr.Row():
+                        refresh_models_btn = gr.Button("Refresh", size="sm")
+                        delete_all_btn = gr.Button("Delete All", size="sm", variant="stop")
+
+                    model_to_delete = gr.Dropdown(
+                        label="Select Model to Delete",
+                        choices=[],
+                        interactive=True,
+                        visible=False
+                    )
+                    delete_one_btn = gr.Button("Delete Selected", size="sm", variant="stop", visible=False)
+                    cleanup_result = gr.Markdown(visible=False)
+
                 gr.HTML(
                     f"""
                     <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #475569;">
@@ -1062,6 +1178,74 @@ def create_ui():
             fn=generate_prompt,
             inputs=[user_idea, role_dropdown, model_dropdown, temperature, max_tokens, n_gpu_layers],
             outputs=output
+        )
+
+        # Model Management handlers
+        def refresh_models_list():
+            """Refresh the list of downloaded models."""
+            downloaded = get_downloaded_models()
+            if not downloaded:
+                return (
+                    "**No models downloaded yet**\n\nModels will be downloaded on first use.",
+                    gr.update(choices=[], visible=False),
+                    gr.update(visible=False),
+                    gr.update(visible=False)
+                )
+
+            total_bytes, total_formatted = get_models_disk_usage()
+            lines = [f"**Downloaded Models** ({len(downloaded)} models, {total_formatted} total)\n"]
+            choices = []
+
+            for model in downloaded:
+                lines.append(f"- **{model['description']}** ({model['size_formatted']})")
+                choices.append(model['key'])
+
+            return (
+                "\n".join(lines),
+                gr.update(choices=choices, visible=True, value=None),
+                gr.update(visible=True),
+                gr.update(visible=False)
+            )
+
+        def handle_delete_one(model_key):
+            """Delete a single model."""
+            if not model_key:
+                return gr.update(value="Please select a model to delete", visible=True)
+
+            success, message = delete_model(model_key)
+            if success:
+                return gr.update(value=f"✅ {message}", visible=True)
+            else:
+                return gr.update(value=f"❌ {message}", visible=True)
+
+        def handle_delete_all():
+            """Delete all downloaded models."""
+            count, freed = delete_all_models()
+            if count > 0:
+                return gr.update(value=f"✅ Deleted {count} models, freed {freed}", visible=True)
+            else:
+                return gr.update(value="No models to delete", visible=True)
+
+        refresh_models_btn.click(
+            fn=refresh_models_list,
+            outputs=[models_status, model_to_delete, delete_one_btn, cleanup_result]
+        )
+
+        delete_one_btn.click(
+            fn=handle_delete_one,
+            inputs=[model_to_delete],
+            outputs=[cleanup_result]
+        ).then(
+            fn=refresh_models_list,
+            outputs=[models_status, model_to_delete, delete_one_btn, cleanup_result]
+        )
+
+        delete_all_btn.click(
+            fn=handle_delete_all,
+            outputs=[cleanup_result]
+        ).then(
+            fn=refresh_models_list,
+            outputs=[models_status, model_to_delete, delete_one_btn, cleanup_result]
         )
 
     return app

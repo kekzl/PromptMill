@@ -51,6 +51,7 @@ Single-file application (`app.py`) with:
 - **Theme**: Dark mode with custom Gradio theme (`create_theme()`)
 - **Branding**: Logo in `assets/logo.svg`, loaded via `get_logo_html()`
 - **Model Management**: `load_model()` handles lazy loading, `unload_model()` frees memory when switching models
+- **Model Cleanup**: `get_downloaded_models()`, `delete_model()`, `delete_all_models()` for disk space management
 - **GPU Detection**: `detect_gpu()` checks for NVIDIA GPU via `nvidia-smi`, sets `n_gpu_layers` accordingly
 - **Role System**: `ROLES` dict defines 14 presets for video, image, and creative tasks
 - **Streaming Generation**: `generate_prompt()` yields tokens progressively using llama-cpp-python's chat completion API

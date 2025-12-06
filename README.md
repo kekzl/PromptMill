@@ -41,6 +41,7 @@ PromptMill is a self-contained web UI that runs **entirely locally** - no API ke
 - **7 LLM Tiers** - From 0.5B (CPU) to 14B parameters (24GB+ VRAM)
 - **14 Specialized Roles** - Optimized prompts for each target AI
 - **Dark Mode UI** - Modern interface with streaming generation
+- **Model Cleanup** - Delete downloaded models to free disk space
 - **Zero Config** - Works out of the box with Docker
 - **Fully Offline** - No API keys or internet required after setup
 
