@@ -1,10 +1,13 @@
+# PromptMill - AI Prompt Generator
+# https://github.com/kekzl/PromptMill
+
 services:
   # GPU version - use with: docker compose --profile gpu up -d
-  prompt-generator:
+  promptmill:
     build:
       context: .
       dockerfile: Dockerfile.gpu
-    container_name: prompt-generator
+    container_name: promptmill
     profiles: ["gpu"]
     ports:
       - "7610:7610"
@@ -20,11 +23,11 @@ services:
               capabilities: [gpu]
 
   # CPU version - use with: docker compose --profile cpu up -d
-  prompt-generator-cpu:
+  promptmill-cpu:
     build:
       context: .
       dockerfile: Dockerfile.cpu
-    container_name: prompt-generator
+    container_name: promptmill
     profiles: ["cpu"]
     ports:
       - "7610:7610"

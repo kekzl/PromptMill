@@ -1,3 +1,6 @@
+# PromptMill - GPU/CUDA Build
+# AI Prompt Generator with local LLM
+
 FROM nvidia/cuda:12.1.1-devel-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -41,6 +44,7 @@ RUN pip install --no-cache-dir \
 RUN pip install --no-cache-dir llama-cpp-python
 
 COPY app.py .
+COPY assets/ ./assets/
 
 RUN mkdir -p /app/models
 ENV MODELS_DIR=/app/models

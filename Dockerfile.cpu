@@ -1,3 +1,6 @@
+# PromptMill - CPU Build
+# AI Prompt Generator with local LLM
+
 FROM python:3.11-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -24,6 +27,7 @@ RUN pip install --no-cache-dir \
 RUN pip install --no-cache-dir llama-cpp-python
 
 COPY app.py .
+COPY assets/ ./assets/
 
 # Create models directory
 RUN mkdir -p /app/models

@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """
-AI Prompt Generator for Wan2.x & Hunyuan Video
+PromptMill - AI Prompt Generator
 
 A self-contained Gradio web UI with selectable LLMs (based on GPU VRAM) for generating
-optimized prompts for AI video generation (Wan2.1, Wan2.2, Hunyuan Video 1.5),
-image generation (Stable Diffusion, FLUX, Midjourney, DALL-E 3), and creative tasks.
+optimized prompts for AI video generation, image generation, and creative tasks.
+
+Supported targets:
+- Video: Wan2.1, Wan2.2, Hunyuan Video, Hunyuan Video 1.5
+- Image: Stable Diffusion, FLUX, Midjourney, DALL-E 3, ComfyUI
+- Creative: Story writing, code generation, technical docs, marketing, SEO
 
 Features:
 - Multiple LLM options from 0.5B to 14B parameters
@@ -14,12 +18,16 @@ Features:
 """
 
 import gradio as gr
+import base64
 import os
 import subprocess
 import threading
 from pathlib import Path
 from typing import Generator
 from huggingface_hub import hf_hub_download
+
+# Version
+__version__ = "2.0.0"
 
 # Models directory
 MODELS_DIR = Path(os.environ.get("MODELS_DIR", "/app/models"))
@@ -549,6 +557,68 @@ Provide SEO-optimized content with suggested meta title and description. Use Mar
     },
 }
 
+# =============================================================================
+# THEME AND BRANDING
+# =============================================================================
+
+def get_logo_html() -> str:
+    """Load and return the logo as an HTML img tag with embedded SVG."""
+    logo_path = Path(__file__).parent / "assets" / "logo.svg"
+    if logo_path.exists():
+        svg_content = logo_path.read_text()
+        b64 = base64.b64encode(svg_content.encode()).decode()
+        return f'<img src="data:image/svg+xml;base64,{b64}" alt="PromptMill" style="height: 50px; margin-bottom: 8px;">'
+    return '<h1 style="margin: 0; color: #818cf8;">PromptMill</h1>'
+
+
+def create_theme():
+    """Create a custom dark theme for the UI."""
+    return gr.themes.Base(
+        primary_hue=gr.themes.colors.indigo,
+        secondary_hue=gr.themes.colors.slate,
+        neutral_hue=gr.themes.colors.slate,
+    ).set(
+        body_background_fill="#0f172a",
+        body_background_fill_dark="#0f172a",
+        background_fill_primary="#1e293b",
+        background_fill_primary_dark="#1e293b",
+        background_fill_secondary="#334155",
+        background_fill_secondary_dark="#334155",
+        border_color_primary="#475569",
+        border_color_primary_dark="#475569",
+        block_background_fill="#1e293b",
+        block_background_fill_dark="#1e293b",
+        block_border_color="#475569",
+        block_border_color_dark="#475569",
+        block_label_background_fill="#334155",
+        block_label_background_fill_dark="#334155",
+        block_title_text_color="#f1f5f9",
+        block_title_text_color_dark="#f1f5f9",
+        body_text_color="#e2e8f0",
+        body_text_color_dark="#e2e8f0",
+        body_text_color_subdued="#94a3b8",
+        body_text_color_subdued_dark="#94a3b8",
+        button_primary_background_fill="#6366f1",
+        button_primary_background_fill_dark="#6366f1",
+        button_primary_background_fill_hover="#818cf8",
+        button_primary_background_fill_hover_dark="#818cf8",
+        button_primary_text_color="#ffffff",
+        button_primary_text_color_dark="#ffffff",
+        button_secondary_background_fill="#334155",
+        button_secondary_background_fill_dark="#334155",
+        button_secondary_text_color="#e2e8f0",
+        button_secondary_text_color_dark="#e2e8f0",
+        input_background_fill="#1e293b",
+        input_background_fill_dark="#1e293b",
+        input_border_color="#475569",
+        input_border_color_dark="#475569",
+        input_placeholder_color="#64748b",
+        input_placeholder_color_dark="#64748b",
+        slider_color="#6366f1",
+        slider_color_dark="#6366f1",
+    )
+
+
 # Get list of role names grouped by category
 def get_role_choices():
     """Get role choices grouped by category for dropdown."""
@@ -803,13 +873,18 @@ def create_ui():
     else:
         gpu_status = "CPU mode (no GPU detected)"
 
-    with gr.Blocks(title="AI Prompt Generator - Wan2.x & Hunyuan") as app:
-        gr.Markdown(
+    with gr.Blocks(title="PromptMill", theme=create_theme()) as app:
+        gr.HTML(
             f"""
-            # AI Prompt Generator
-            Generate optimized prompts for **Wan2.1/2.2**, **Hunyuan Video 1.5**, Stable Diffusion, FLUX, and more.
-
-            *Select your GPU tier for optimal performance* | **{gpu_status}**
+            <div style="text-align: center; padding: 20px 0 10px 0;">
+                {get_logo_html()}
+                <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 14px;">
+                    AI-powered prompt generator for video, image, and creative content
+                </p>
+                <p style="color: #64748b; margin: 4px 0 0 0; font-size: 12px;">
+                    {gpu_status}
+                </p>
+            </div>
             """
         )
 
@@ -910,15 +985,28 @@ def create_ui():
                     info="-1 = all layers on GPU, 0 = CPU only"
                 )
 
-                gr.Markdown(
+                gr.HTML(
                     f"""
-                    ---
-                    **Status:** {gpu_status}
-
-                    *Models auto-download on first use.*
-                    *Changing model will free current memory.*
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #475569;">
+                        <p style="color: #64748b; font-size: 12px; margin: 0;">
+                            Models auto-download on first use<br>
+                            Changing model will free current memory
+                        </p>
+                    </div>
                     """
                 )
+
+        # Footer
+        gr.HTML(
+            f"""
+            <div style="text-align: center; padding: 20px 0; margin-top: 20px; border-top: 1px solid #334155;">
+                <p style="color: #64748b; font-size: 12px; margin: 0;">
+                    PromptMill v{__version__} |
+                    <a href="https://github.com/kekzl/PromptMill" style="color: #818cf8; text-decoration: none;">GitHub</a>
+                </p>
+            </div>
+            """
+        )
 
         # Update role info when selection changes
         def update_role_info(choice):
@@ -981,6 +1069,7 @@ def create_ui():
 
 if __name__ == "__main__":
     print("=" * 50)
+    print(f"PromptMill v{__version__}")
     print("AI Prompt Generator")
     print("=" * 50)
     if HAS_GPU and GPU_VRAM_MB > 0:

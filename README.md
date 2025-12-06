@@ -1,92 +1,115 @@
-# AI Prompt Generator
+<p align="center">
+  <img src="assets/logo.svg" alt="PromptMill" width="300">
+</p>
 
-A self-contained web UI for generating optimized prompts for AI video, image, and creative tasks. Includes a built-in uncensored LLM - no external dependencies required.
+<p align="center">
+  <strong>AI-powered prompt generator for video, image, and creative content</strong>
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#supported-targets">Targets</a> •
+  <a href="#configuration">Configuration</a>
+</p>
+
+---
+
+A self-contained web UI with selectable LLMs (scaled by GPU VRAM) for generating optimized prompts. No external API dependencies - runs entirely locally.
 
 ## Features
 
-- **12 Preset Roles** for different AI models and tasks
-- Built-in Dolphin-Mistral-7B model (uncensored, creative)
-- Auto-detects GPU, falls back to CPU if unavailable
-- Streaming text generation
+- **14 Preset Roles** for video, image, and creative tasks
+- **7 LLM Options** from 0.5B to 14B parameters
+- **Auto-detects GPU VRAM** and selects optimal model
+- Dark mode UI with streaming text generation
 - One-click copy button
-
-## Supported Roles
-
-### Video Generation
-- **Wan2.1** - Alibaba text-to-video
-- **Hunyuan Video** - Tencent text-to-video
-
-### Image Generation
-- **Stable Diffusion** - SD/SDXL prompts
-- **Midjourney** - Artistic MJ-style prompts
-- **FLUX** - Black Forest Labs prompts
-- **DALL-E 3** - OpenAI image prompts
-- **ComfyUI** - Workflow-compatible prompts
-
-### Creative & Coding
-- **Story Writer** - Creative writing
-- **Code Generator** - Programming snippets
-- **Technical Writer** - Documentation/README
-- **Marketing Copy** - Ad copy and social
-- **SEO Content** - Blog posts and articles
 
 ## Quick Start
 
-### Default (CPU)
+### Docker (Recommended)
 
 ```bash
-docker compose up -d
-```
-
-### With GPU (NVIDIA)
-
-```bash
+# GPU (NVIDIA CUDA) - auto-detects VRAM and selects best model
 docker compose --profile gpu up -d
+
+# CPU only
+docker compose --profile cpu up -d
 ```
 
 Open http://localhost:7610
 
-Model auto-downloads on first run (~4GB) and persists in `./models/`.
+Models auto-download on first use and persist in `./models/`.
 
-## Manual Setup
-
-### GPU (CUDA)
+### Manual Setup
 
 ```bash
+# GPU (CUDA)
 CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python
 pip install gradio huggingface_hub
 python app.py
-```
 
-### CPU Only
-
-```bash
+# CPU Only
 pip install llama-cpp-python gradio huggingface_hub
 python app.py
 ```
 
-## Model Info
+## Supported Targets
 
-- **Model:** Dolphin 2.6 Mistral 7B (Q4_K_M)
-- **Size:** ~4.4GB
-- **Type:** Uncensored, instruction-tuned
+### Video Generation
+- **Wan2.1** - Open-source text-to-video with cinematic quality
+- **Wan2.2** - Latest Wan with improved motion and physics
+- **Hunyuan Video** - Tencent open-source text-to-video
+- **Hunyuan Video 1.5** - Extended duration and image-to-video
+
+### Image Generation
+- **Stable Diffusion** - SD/SDXL prompts with quality tags
+- **Midjourney** - Artistic MJ-style prompts with parameters
+- **FLUX** - Black Forest Labs natural language prompts
+- **DALL-E 3** - OpenAI detailed scene descriptions
+- **ComfyUI** - Workflow-compatible positive/negative prompts
+
+### Creative & Coding
+- **Story Writer** - Creative writing and narratives
+- **Code Generator** - Programming snippets with best practices
+- **Technical Writer** - Documentation and READMEs
+- **Marketing Copy** - Ad copy, social media, CTAs
+- **SEO Content** - Blog posts with meta optimization
+
+## LLM Options
+
+| GPU VRAM | Model | Parameters | Quality |
+|----------|-------|------------|---------|
+| CPU Only | Qwen2.5 0.5B Q8 | 0.5B | Basic |
+| 4GB | Qwen2.5 1.5B Q4_K_M | 1.5B | Good |
+| 6GB | Qwen2.5 3B Q4_K_M | 3B | Great |
+| 8GB | Dolphin Mistral 7B Q4_K_M | 7B | Excellent |
+| 12GB | Qwen2.5 7B Q6_K_L | 7B | High |
+| 16GB+ | Qwen2.5 14B Q4_K_M | 14B | Premium |
+| 24GB+ | Qwen2.5 14B Q8 | 14B | Maximum |
 
 ## Configuration
 
-The app auto-detects GPU availability on startup:
-- GPU detected: Uses all GPU layers (-1)
-- No GPU: Uses CPU only (0)
+The app auto-detects GPU VRAM and selects the optimal model:
+- GPU detected: Uses all GPU layers, selects model by VRAM
+- No GPU: Uses CPU mode with lightweight 0.5B model
 
-You can adjust GPU layers in the UI settings panel.
+You can manually override the model and GPU layers in the UI.
 
 ## File Structure
 
 ```
 .
 ├── app.py              # Main application
+├── assets/
+│   └── logo.svg        # PromptMill logo
 ├── Dockerfile.gpu      # GPU/CUDA build
 ├── Dockerfile.cpu      # CPU-only build
 ├── docker-compose.yml  # Docker profiles
 ├── requirements.txt
-└── models/             # Downloaded model (persisted)
+└── models/             # Downloaded models (persisted)
 ```
+
+## License
+
+MIT
