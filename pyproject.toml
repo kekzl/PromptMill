@@ -1,6 +1,6 @@
 [project]
 name = "promptmill"
-version = "2.0.0"
+version = "2.2.0"
 description = "AI-powered prompt generator for video, image, and creative content"
 readme = "README.md"
 license = { text = "MIT" }
@@ -41,6 +41,8 @@ dependencies = [
 dev = [
     "ruff>=0.8.0",
     "mypy>=1.13.0",
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
 ]
 
 [project.urls]
@@ -111,3 +113,20 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
 check_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]

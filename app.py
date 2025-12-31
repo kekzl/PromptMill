@@ -30,6 +30,7 @@ Features:
 
 import base64
 import gc
+import logging
 import os
 import shutil
 import subprocess
@@ -42,10 +43,41 @@ import gradio as gr
 from huggingface_hub import hf_hub_download
 
 # Version
-__version__ = "2.1.0"
+__version__ = "2.2.0"
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("promptmill")
+
+# =============================================================================
+# CONFIGURATION CONSTANTS
+# =============================================================================
 
 # Models directory
 MODELS_DIR = Path(os.environ.get("MODELS_DIR", "/app/models"))
+
+# Server configuration
+SERVER_HOST = os.environ.get("SERVER_HOST", "0.0.0.0")
+SERVER_PORT = int(os.environ.get("SERVER_PORT", "7610"))
+
+# Model configuration
+DEFAULT_BATCH_SIZE = 512
+DEFAULT_CHAT_FORMAT = "llama-3"
+GPU_DETECTION_TIMEOUT = 5  # seconds
+
+# Input validation limits
+MAX_PROMPT_LENGTH = 10000
+MIN_TEMPERATURE = 0.1
+MAX_TEMPERATURE = 2.0
+MIN_TOKENS = 100
+MAX_TOKENS = 2000
 
 # =============================================================================
 # MODEL CONFIGURATIONS BY VRAM
@@ -109,6 +141,9 @@ current_model_key = None
 unload_timer = None
 UNLOAD_DELAY_SECONDS = 10
 
+# Thread lock for model operations (thread-safety for concurrent requests)
+model_lock = threading.Lock()
+
 
 def detect_gpu() -> tuple[bool, int, str]:
     """Detect if CUDA GPU is available and return VRAM in MB.
@@ -123,16 +158,28 @@ def detect_gpu() -> tuple[bool, int, str]:
             check=False,
             capture_output=True,
             text=True,
-            timeout=5,
+            timeout=GPU_DETECTION_TIMEOUT,
         )
         if result.returncode == 0 and result.stdout.strip():
             line = result.stdout.strip().split("\n")[0]  # First GPU
             parts = line.split(", ")
             vram_mb = int(parts[0].strip())
             gpu_name = parts[1].strip() if len(parts) > 1 else "Unknown GPU"
+            logger.info("GPU detected: %s with %d MB VRAM", gpu_name, vram_mb)
             return True, vram_mb, gpu_name
+        logger.info("No GPU detected via nvidia-smi")
         return False, 0, ""
-    except Exception:
+    except FileNotFoundError:
+        logger.debug("nvidia-smi not found - no NVIDIA GPU available")
+        return False, 0, ""
+    except subprocess.TimeoutExpired:
+        logger.warning("GPU detection timed out after %d seconds", GPU_DETECTION_TIMEOUT)
+        return False, 0, ""
+    except (ValueError, IndexError) as e:
+        logger.warning("Error parsing GPU info: %s", e)
+        return False, 0, ""
+    except OSError as e:
+        logger.debug("OS error during GPU detection: %s", e)
         return False, 0, ""
 
 
@@ -3527,11 +3574,19 @@ def get_models_disk_usage() -> tuple[int, str]:
 
 
 def delete_model(model_key: str) -> tuple[bool, str]:
-    """Delete a specific downloaded model."""
+    """Delete a specific downloaded model.
+
+    Args:
+        model_key: The model configuration key to delete.
+
+    Returns:
+        Tuple of (success, message).
+    """
     global llm, current_model_key
 
     config = MODEL_CONFIGS.get(model_key)
     if not config:
+        logger.warning("Attempted to delete unknown model: %s", model_key)
         return False, f"Unknown model: {model_key}"
 
     model_path = MODELS_DIR / config["file"]
@@ -3544,14 +3599,22 @@ def delete_model(model_key: str) -> tuple[bool, str]:
 
     try:
         model_path.unlink()
-        print(f"Deleted model: {config['file']}")
+        logger.info("Deleted model: %s", config["file"])
         return True, f"Deleted: {config['description']}"
-    except Exception as e:
+    except PermissionError as e:
+        logger.error("Permission denied deleting model %s: %s", model_key, e)
+        return False, f"Permission denied: {e!s}"
+    except OSError as e:
+        logger.error("Error deleting model %s: %s", model_key, e)
         return False, f"Error deleting model: {e!s}"
 
 
 def delete_all_models() -> tuple[int, str]:
-    """Delete all downloaded models."""
+    """Delete all downloaded models.
+
+    Returns:
+        Tuple of (deleted_count, freed_space_formatted).
+    """
     global llm, current_model_key
 
     # Unload current model first
@@ -3569,9 +3632,11 @@ def delete_all_models() -> tuple[int, str]:
                 model_path.unlink()
                 deleted_count += 1
                 total_freed += size
-                print(f"Deleted: {config['file']}")
-            except Exception as e:
-                print(f"Error deleting {config['file']}: {e}")
+                logger.info("Deleted: %s", config["file"])
+            except PermissionError as e:
+                logger.error("Permission denied deleting %s: %s", config["file"], e)
+            except OSError as e:
+                logger.error("Error deleting %s: %s", config["file"], e)
 
     # Also clean up HuggingFace cache if exists
     cache_dir = MODELS_DIR / ".cache"
@@ -3580,9 +3645,11 @@ def delete_all_models() -> tuple[int, str]:
             cache_size = sum(f.stat().st_size for f in cache_dir.rglob("*") if f.is_file())
             shutil.rmtree(cache_dir)
             total_freed += cache_size
-            print("Cleaned HuggingFace cache")
-        except Exception as e:
-            print(f"Error cleaning cache: {e}")
+            logger.info("Cleaned HuggingFace cache")
+        except PermissionError as e:
+            logger.error("Permission denied cleaning cache: %s", e)
+        except OSError as e:
+            logger.error("Error cleaning cache: %s", e)
 
     return deleted_count, format_size(total_freed)
 
@@ -3597,8 +3664,7 @@ def get_model_path(model_key: str, progress_callback: Callable[[str], None] | No
     model_path = MODELS_DIR / model_file
 
     if not model_path.exists():
-        print(f"Downloading model {model_file} from {model_repo}...")
-        print("This may take a few minutes on first run...")
+        logger.info("Downloading model %s from %s", model_file, model_repo)
         if progress_callback:
             progress_callback(
                 f"⬇️ Downloading {config['description']}...\n\nThis may take a few minutes on first run."
@@ -3610,7 +3676,7 @@ def get_model_path(model_key: str, progress_callback: Callable[[str], None] | No
             local_dir_use_symlinks=False,
         )
         model_path = Path(downloaded_path)
-        print(f"Model downloaded to {model_path}")
+        logger.info("Model downloaded to %s", model_path)
         if progress_callback:
             progress_callback("✅ Download complete! Loading model...")
 
@@ -3618,16 +3684,20 @@ def get_model_path(model_key: str, progress_callback: Callable[[str], None] | No
 
 
 def unload_model() -> None:
-    """Unload the current model to free memory."""
+    """Unload the current model to free memory.
+
+    Thread-safe model unloading with memory cleanup.
+    """
     global llm, current_model_key
-    if llm is not None:
-        model_name = current_model_key
-        del llm
-        llm = None
-        current_model_key = None
-        # Try to free GPU memory
-        gc.collect()
-        print(f"Model unloaded: {model_name}")
+    with model_lock:
+        if llm is not None:
+            model_name = current_model_key
+            del llm
+            llm = None
+            current_model_key = None
+            # Try to free GPU memory
+            gc.collect()
+            logger.info("Model unloaded: %s", model_name)
 
 
 def cancel_unload_timer() -> None:
@@ -3645,7 +3715,7 @@ def schedule_unload() -> None:
     unload_timer = threading.Timer(UNLOAD_DELAY_SECONDS, auto_unload_model)
     unload_timer.daemon = True
     unload_timer.start()
-    print(f"Model will auto-unload in {UNLOAD_DELAY_SECONDS} seconds...")
+    logger.debug("Model will auto-unload in %d seconds", UNLOAD_DELAY_SECONDS)
 
 
 def auto_unload_model() -> None:
@@ -3653,27 +3723,45 @@ def auto_unload_model() -> None:
     global unload_timer
     unload_timer = None
     if llm is not None:
-        print(f"Auto-unloading model after {UNLOAD_DELAY_SECONDS}s of inactivity...")
+        logger.info("Auto-unloading model after %ds of inactivity", UNLOAD_DELAY_SECONDS)
         unload_model()
 
 
 def load_model(
     model_key: str, n_gpu_layers: int = -1, progress_callback: Callable[[str], None] | None = None
 ) -> Any:
-    """Load the LLM model."""
+    """Load the LLM model.
+
+    Thread-safe model loading with automatic switching between models.
+
+    Args:
+        model_key: The model configuration key to load.
+        n_gpu_layers: Number of GPU layers (-1 for all, 0 for CPU only).
+        progress_callback: Optional callback for progress updates.
+
+    Returns:
+        The loaded Llama model instance.
+    """
     global llm, current_model_key
 
     config = MODEL_CONFIGS.get(model_key, MODEL_CONFIGS[DEFAULT_MODEL])
 
-    # Check if we need to switch models
-    if llm is not None and current_model_key == model_key:
-        return llm
+    with model_lock:
+        # Check if we need to switch models
+        if llm is not None and current_model_key == model_key:
+            logger.debug("Model already loaded: %s", model_key)
+            return llm
 
-    # Unload existing model if switching
+        # Unload existing model if switching
+        if llm is not None and current_model_key != model_key:
+            logger.info("Switching model from %s to %s", current_model_key, model_key)
+            if progress_callback:
+                progress_callback(f"🔄 Switching to {config['description']}...")
+            # Release lock temporarily for unload (it has its own lock)
+            pass
+
+    # Unload outside lock to avoid deadlock
     if llm is not None and current_model_key != model_key:
-        print(f"Switching model from {current_model_key} to {model_key}...")
-        if progress_callback:
-            progress_callback(f"🔄 Switching to {config['description']}...")
         unload_model()
 
     from llama_cpp import Llama
@@ -3681,25 +3769,26 @@ def load_model(
     model_path = get_model_path(model_key, progress_callback)
     n_ctx = config.get("n_ctx", 4096)
 
-    print(f"Loading model: {config['description']}")
-    print(f"Model path: {model_path}")
-    print(f"GPU layers: {n_gpu_layers} ({'GPU' if n_gpu_layers != 0 else 'CPU only'})")
-    print(f"Context size: {n_ctx}")
+    logger.info("Loading model: %s", config["description"])
+    logger.info("Model path: %s", model_path)
+    logger.info("GPU layers: %d (%s)", n_gpu_layers, "GPU" if n_gpu_layers != 0 else "CPU only")
+    logger.info("Context size: %d", n_ctx)
 
     if progress_callback:
         progress_callback(f"🔄 Loading {config['description']}...")
 
-    llm = Llama(
-        model_path=str(model_path),
-        n_gpu_layers=n_gpu_layers,
-        n_ctx=n_ctx,
-        n_batch=512,
-        verbose=False,
-        chat_format="llama-3",
-    )
-    current_model_key = model_key
-    print("Model loaded successfully!")
-    return llm
+    with model_lock:
+        llm = Llama(
+            model_path=str(model_path),
+            n_gpu_layers=n_gpu_layers,
+            n_ctx=n_ctx,
+            n_batch=DEFAULT_BATCH_SIZE,
+            verbose=False,
+            chat_format=DEFAULT_CHAT_FORMAT,
+        )
+        current_model_key = model_key
+        logger.info("Model loaded successfully")
+        return llm
 
 
 def generate_prompt(
@@ -3710,11 +3799,39 @@ def generate_prompt(
     max_tokens: int,
     n_gpu_layers: int,
 ) -> Generator[str, None, None]:
-    """Generate a prompt using the local LLM."""
+    """Generate a prompt using the local LLM.
 
-    if not user_idea.strip():
+    Args:
+        user_idea: The user's creative idea or request.
+        role_choice: The selected role/target AI model.
+        model_choice: The LLM model to use for generation.
+        temperature: Creativity setting (0.1-2.0).
+        max_tokens: Maximum tokens to generate.
+        n_gpu_layers: GPU layers configuration.
+
+    Yields:
+        Generated prompt text, streamed progressively.
+    """
+    # Input validation
+    user_idea = user_idea.strip()
+    if not user_idea:
         yield "Please enter your idea or request."
         return
+
+    if len(user_idea) > MAX_PROMPT_LENGTH:
+        yield f"Input too long. Please limit to {MAX_PROMPT_LENGTH} characters."
+        return
+
+    # Validate temperature range
+    temperature = max(MIN_TEMPERATURE, min(MAX_TEMPERATURE, temperature))
+
+    # Validate max_tokens range
+    max_tokens = max(MIN_TOKENS, min(MAX_TOKENS, int(max_tokens)))
+
+    # Validate model choice
+    if model_choice not in MODEL_CONFIGS:
+        logger.warning("Invalid model choice: %s, using default", model_choice)
+        model_choice = DEFAULT_MODEL
 
     # Cancel any pending unload since we're about to use the model
     cancel_unload_timer()
@@ -3722,16 +3839,19 @@ def generate_prompt(
     # Get the selected role
     role_id = parse_role_choice(role_choice)
     if role_id not in ROLES:
+        logger.error("Unknown role requested: %s", role_id)
         yield f"Unknown role: {role_id}"
         return
 
     role = ROLES[role_id]
     system_prompt = role["system_prompt"]
 
+    logger.info("Generating prompt for role: %s, model: %s", role_id, model_choice)
+
     # Status tracking for UI feedback
     status_message = [None]  # Use list to allow modification in nested function
 
-    def update_status(msg):
+    def update_status(msg: str) -> None:
         status_message[0] = msg
 
     # Check if model needs downloading
@@ -3747,7 +3867,16 @@ def generate_prompt(
         )
         if needs_download:
             yield "✅ Model ready! Generating prompt..."
+    except ImportError as e:
+        logger.error("Failed to import llama-cpp-python: %s", e)
+        yield "Error: llama-cpp-python not installed. Please install it first."
+        return
+    except OSError as e:
+        logger.error("Failed to load model file: %s", e)
+        yield f"Error loading model file: {e!s}"
+        return
     except Exception as e:
+        logger.exception("Unexpected error loading model")
         yield f"Error loading model: {e!s}"
         return
 
@@ -3770,12 +3899,15 @@ def generate_prompt(
                 yield full_response
 
         if not full_response:
+            logger.warning("No response generated for prompt")
             hints = []
             if n_gpu_layers != 0:
                 hints.append("Set GPU Layers to 0 (CPU mode)")
             hints.append("Try increasing temperature")
             hints.append("Try a shorter input")
             yield "No response generated. Try:\n- " + "\n- ".join(hints)
+        else:
+            logger.info("Prompt generation complete (%d chars)", len(full_response))
 
         # Schedule auto-unload after generation completes
         schedule_unload()
@@ -3783,10 +3915,16 @@ def generate_prompt(
     except RuntimeError as e:
         error_msg = str(e).lower()
         if "memory" in error_msg or "cuda" in error_msg or "gpu" in error_msg:
+            logger.error("GPU/Memory error during generation: %s", e)
             yield f"GPU/Memory error: {e!s}\n\nTry setting GPU Layers to 0 for CPU-only mode."
         else:
+            logger.error("Runtime error during generation: %s", e)
             yield f"Runtime error: {e!s}"
+    except (KeyError, TypeError, AttributeError) as e:
+        logger.error("Error processing model response: %s", e)
+        yield f"Error processing response: {e!s}"
     except Exception as e:
+        logger.exception("Unexpected error during prompt generation")
         yield f"Error generating prompt: {e!s}\n\nIf this persists, try restarting the application."
 
 
@@ -4091,22 +4229,22 @@ def create_ui() -> gr.Blocks:
 
 def main() -> None:
     """Main entry point for PromptMill."""
-    print("=" * 50)
-    print(f"PromptMill v{__version__}")
-    print("AI Prompt Generator")
-    print("=" * 50)
+    logger.info("=" * 50)
+    logger.info("PromptMill v%s", __version__)
+    logger.info("AI Prompt Generator")
+    logger.info("=" * 50)
     if HAS_GPU and GPU_VRAM_MB > 0:
         vram_gb = GPU_VRAM_MB / 1024
-        print(f"GPU: {GPU_NAME}")
-        print(f"VRAM: {vram_gb:.1f} GB ({GPU_VRAM_MB} MB)")
+        logger.info("GPU: %s", GPU_NAME)
+        logger.info("VRAM: %.1f GB (%d MB)", vram_gb, GPU_VRAM_MB)
     else:
-        print("GPU: Not detected (CPU mode)")
-    print(f"Auto-selected model: {DEFAULT_MODEL}")
-    print(f"Available models: {len(MODEL_CONFIGS)}")
-    print("Starting server...")
+        logger.info("GPU: Not detected (CPU mode)")
+    logger.info("Auto-selected model: %s", DEFAULT_MODEL)
+    logger.info("Available models: %d", len(MODEL_CONFIGS))
+    logger.info("Starting server on %s:%d", SERVER_HOST, SERVER_PORT)
 
     app = create_ui()
-    app.launch(server_name="0.0.0.0", server_port=7610, share=False, show_error=True)
+    app.launch(server_name=SERVER_HOST, server_port=SERVER_PORT, share=False, show_error=True)
 
 
 if __name__ == "__main__":
