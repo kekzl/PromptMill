@@ -5,11 +5,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 **PromptMill** - A self-contained Gradio web UI with **selectable LLMs based on GPU VRAM** for generating optimized prompts for:
-- **Video**: Wan2.1, Wan2.2, Hunyuan, Runway, Kling, Pika, Luma, Sora, Veo
-- **Image**: Stable Diffusion, Midjourney, FLUX, DALL-E, ComfyUI, Ideogram, Leonardo, Firefly, Recraft, Imagen
-- **Audio**: Suno AI, Udio, ElevenLabs
-- **3D**: Meshy, Tripo AI
-- **Creative**: Story, code, technical docs, marketing, SEO, screenplays, social media, podcasts, UX, and more
+- **Video**: Wan2.1, Wan2.2, Wan2.5, Hunyuan, Hunyuan 1.5, Runway Gen-3, Kling, Kling 2.1, Pika, Pika 2.1, Luma Dream Machine, Luma Ray2, Sora, Veo, Veo 3, Hailuo AI (MiniMax), Seedance, SkyReels V1
+- **Image**: Stable Diffusion, SD 3.5, Midjourney, FLUX, FLUX 2, DALL-E, ComfyUI, Ideogram, Leonardo, Firefly, Recraft, Imagen 3, Imagen 4, GPT-4o Images, Reve Image, HiDream-I1, Qwen-Image
+- **Audio**: Suno AI, Udio, ElevenLabs, Eleven Music, Mureka AI, SOUNDRAW, Beatoven.ai, Stable Audio 2.0, MusicGen
+- **3D**: Meshy, Tripo AI, Rodin, Spline, Sloyd, 3DFY.ai, Luma Genie, Masterpiece X
+- **Creative**: Story, code, technical docs, marketing, SEO, screenplays, social media, podcasts, UX, press releases, poetry, data analysis, business plans, academic writing, tutorials, newsletters, legal docs, grant writing, API documentation, courses, pitch decks, meeting notes, changelogs
 
 ## Commands
 
@@ -55,7 +55,7 @@ Single-file application (`app.py`) with:
 - **Model Management**: `load_model()` handles lazy loading, `unload_model()` frees memory when switching models
 - **Model Cleanup**: `get_downloaded_models()`, `delete_model()`, `delete_all_models()` for disk space management
 - **GPU Detection**: `detect_gpu()` checks for NVIDIA GPU via `nvidia-smi`, sets `n_gpu_layers` accordingly
-- **Role System**: `ROLES` dict defines 44 presets for video, image, audio, 3D, and creative tasks
+- **Role System**: `ROLES` dict defines 70+ presets for video, image, audio, 3D, and creative tasks
 - **Streaming Generation**: `generate_prompt()` yields tokens progressively using llama-cpp-python's chat completion API
 - **UI**: Gradio Blocks interface with target model dropdown, LLM selector, and generation settings
 
