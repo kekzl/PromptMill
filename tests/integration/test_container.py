@@ -143,7 +143,7 @@ class TestRoleIntegration:
         video_roles = container.role_repository.get_by_category(RoleCategory.VIDEO)
         role_names = {r.name for r in video_roles}
 
-        expected = {"Wan2.1", "Sora", "Runway Gen-3", "Kling", "Pika"}
+        expected = {"Wan2.1", "Sora", "Runway Gen-3", "Kling AI", "Pika Labs"}
         assert expected.issubset(role_names)
 
     def test_image_roles_exist(self, container: Container) -> None:
@@ -151,5 +151,5 @@ class TestRoleIntegration:
         image_roles = container.role_repository.get_by_category(RoleCategory.IMAGE)
         role_names = {r.name for r in image_roles}
 
-        expected = {"Midjourney", "FLUX", "DALL-E", "Stable Diffusion"}
+        expected = {"Midjourney", "FLUX", "DALL-E 3", "Stable Diffusion"}
         assert expected.issubset(role_names)
