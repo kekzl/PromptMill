@@ -1,7 +1,7 @@
 # PromptMill - CPU Build
 # AI Prompt Generator with local LLM
 
-FROM python:3.11-slim
+FROM python:3.12-slim-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
@@ -21,19 +21,33 @@ RUN pip install --no-cache-dir --upgrade pip
 # Install Python dependencies (CPU-only llama-cpp-python)
 RUN pip install --no-cache-dir \
     "huggingface_hub>=0.20.0,<1.0.0" \
-    "gradio>=4.40.0,<5.0.0"
+    "gradio>=4.44.0,<5.0.0" \
+    "pytest>=7.0.0" \
+    "pytest-cov>=4.0.0"
 
 # Install llama-cpp-python without CUDA
 RUN pip install --no-cache-dir llama-cpp-python
 
-COPY app.py .
-COPY assets/ ./assets/
+# Create non-root user for security
+RUN useradd -m -s /bin/bash -u 1000 promptmill
 
-# Create models directory
-RUN mkdir -p /app/models
+COPY --chown=promptmill:promptmill src/ ./src/
+COPY --chown=promptmill:promptmill assets/ ./assets/
+COPY --chown=promptmill:promptmill tests/ ./tests/
+
+# Create models directory and set ownership of entire app directory
+RUN mkdir -p /app/models && chown -R promptmill:promptmill /app
 ENV MODELS_DIR=/app/models
 ENV HF_HOME=/app/models/.cache
+ENV PYTHONPATH=/app/src
+
+# Switch to non-root user
+USER promptmill
 
 EXPOSE 7610
 
-CMD ["python", "app.py"]
+# Health check using /health endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7610/health')" || exit 1
+
+CMD ["python", "-m", "promptmill"]

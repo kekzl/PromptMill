@@ -1,16 +1,18 @@
-# PromptMill - GPU/CUDA Build
+# PromptMill - GPU/CUDA Build (Multi-stage)
 # AI Prompt Generator with local LLM
 
-FROM nvidia/cuda:12.1.1-devel-ubuntu22.04
+# =============================================================================
+# Stage 1: Build llama-cpp-python with CUDA support
+# =============================================================================
+FROM nvidia/cuda:12.1.1-devel-ubuntu22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
-ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y \
-    python3.11 \
-    python3.11-venv \
-    python3.11-dev \
+    python3.12 \
+    python3.12-venv \
+    python3.12-dev \
     python3-pip \
     git \
     build-essential \
@@ -18,10 +20,12 @@ RUN apt-get update && apt-get install -y \
     ninja-build \
     && rm -rf /var/lib/apt/lists/*
 
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 \
-    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 \
+    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
 
-WORKDIR /app
+# Create virtual environment for cleaner copy to runtime
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 # CUDA build environment
 ENV CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc"
@@ -35,22 +39,60 @@ RUN ln -sf /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/li
 
 RUN pip install --no-cache-dir --upgrade pip
 
-# Pin compatible versions
+# Install Python dependencies
 RUN pip install --no-cache-dir \
     "huggingface_hub>=0.20.0,<1.0.0" \
-    "gradio>=4.40.0,<5.0.0"
+    "gradio>=4.44.0,<5.0.0" \
+    "pytest>=7.0.0" \
+    "pytest-cov>=4.0.0"
 
-# Install llama-cpp-python with CUDA
+# Install llama-cpp-python with CUDA (this is the heavy compile step)
 RUN pip install --no-cache-dir llama-cpp-python
 
-COPY app.py .
-COPY assets/ ./assets/
+# =============================================================================
+# Stage 2: Runtime image (smaller, no build tools)
+# =============================================================================
+FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
 
-RUN mkdir -p /app/models
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+ENV PYTHONUNBUFFERED=1
+
+# Install only Python runtime (no dev packages)
+RUN apt-get update && apt-get install -y \
+    python3.12 \
+    python3.12-venv \
+    && rm -rf /var/lib/apt/lists/* \
+    && update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 \
+    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+WORKDIR /app
+
+# Create non-root user for security
+RUN useradd -m -s /bin/bash -u 1000 promptmill
+
+COPY --chown=promptmill:promptmill src/ ./src/
+COPY --chown=promptmill:promptmill assets/ ./assets/
+COPY --chown=promptmill:promptmill tests/ ./tests/
+
+# Create models directory and set ownership of entire app directory
+RUN mkdir -p /app/models && chown -R promptmill:promptmill /app
 ENV MODELS_DIR=/app/models
+ENV PYTHONPATH=/app/src
 ENV HF_HOME=/app/models/.cache
 ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64
 
+# Switch to non-root user
+USER promptmill
+
 EXPOSE 7610
 
-CMD ["python", "app.py"]
+# Health check using new /health endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7610/health')" || exit 1
+
+CMD ["python", "-m", "promptmill"]

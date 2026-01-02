@@ -31,100 +31,194 @@ docker compose --profile cpu up -d
 # GPU
 CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python
 pip install gradio huggingface_hub
-python app.py
+python -m promptmill
 
 # CPU
 pip install llama-cpp-python gradio huggingface_hub
-python app.py
+python -m promptmill
 
 # Run tests
-pip install pytest pytest-cov
-pytest
+PYTHONPATH=src pytest tests/unit -v
 ```
 
 Access at http://localhost:7610
 
 ## Architecture
 
-Single-file application (`app.py`) with:
+**Hexagonal Architecture** (Ports and Adapters) with **Domain-Driven Design** using pure Python 3.12+.
 
-### Configuration (Lines 46-80)
-- `__version__`: Current version string
-- `logger`: Structured logging with timestamps
-- Environment variables: `SERVER_HOST`, `SERVER_PORT`, `MODELS_DIR`
-- Constants: `MAX_PROMPT_LENGTH`, `MIN/MAX_TEMPERATURE`, `MIN/MAX_TOKENS`
+### Layer Overview
 
-### Model System (Lines 85-145)
-- `MODEL_CONFIGS`: 7 uncensored Dolphin LLM options scaled by VRAM (1B to 8B parameters)
-  - CPU Only: Dolphin 3.0 Llama 3.2 1B Q8
-  - 4GB VRAM: Dolphin 3.0 Llama 3.2 3B Q4_K_M
-  - 6GB VRAM: Dolphin 3.0 Llama 3.2 3B Q8
-  - 8GB VRAM: Dolphin 3.0 Llama 3.1 8B Q4_K_M (default)
-  - 12GB VRAM: Dolphin 3.0 Llama 3.1 8B Q6_K_L
-  - 16GB+ VRAM: Dolphin 3.0 Llama 3.1 8B Q8
-  - 24GB+ VRAM: Dolphin 2.9.4 Llama 3.1 8B Q8 (131K context)
-- `model_lock`: Threading lock for concurrent request safety
-- Global state: `llm`, `current_model_key`, `unload_timer`
+```
+src/promptmill/
+├── domain/           # Pure business logic (no external dependencies)
+├── application/      # Use cases and services
+├── infrastructure/   # External adapters and config
+└── presentation/     # Gradio UI
+```
 
-### Core Functions
-- `detect_gpu()`: NVIDIA GPU detection via `nvidia-smi` with proper error handling
-- `load_model()`: Thread-safe lazy loading with model switching
-- `unload_model()`: Thread-safe memory cleanup with garbage collection
-- `generate_prompt()`: Streaming generation with input validation
-- `schedule_unload()`: Auto-unload timer (10 seconds of inactivity)
+### Domain Layer (`src/promptmill/domain/`)
 
-### UI Components
-- `create_theme()`: Custom dark mode Gradio theme
-- `create_ui()`: Gradio Blocks interface with role/model selection
-- `get_logo_html()`: Logo loading from assets/logo.svg
+Pure Python with no external dependencies.
+
+**Entities:**
+- `Model` - LLM model configuration (frozen dataclass)
+- `Role` - Prompt template with category (frozen dataclass)
+- `GPUInfo` - GPU detection result (value object)
+
+**Value Objects:**
+- `PromptGenerationRequest` - Validated input (user_input, role_name, temperature, max_tokens)
+- `PromptGenerationResult` - Generation output with metadata
+
+**Ports (Interfaces):**
+- `LLMPort` - Abstract LLM operations (generate, load, unload)
+- `ModelRepositoryPort` - Model storage and download
+- `GPUDetectorPort` - GPU detection
+- `RoleRepositoryPort` - Role/template retrieval
+
+**Exceptions:**
+- `DomainError` - Base exception
+- `ModelNotLoadedError`, `ModelLoadError`, `ModelDownloadError`
+- `RoleNotFoundError`, `InvalidTemperatureError`, etc.
+
+### Application Layer (`src/promptmill/application/`)
+
+**Use Cases:**
+- `GeneratePromptUseCase` - Generate prompt with streaming
+- `LoadModelUseCase` - Load LLM with model switching
+- `UnloadModelUseCase` - Unload and free memory
+- `SelectModelByVRAMUseCase` - Auto-select model by GPU VRAM
+- `DeleteModelUseCase` - Delete downloaded model
+- `GetHealthStatusUseCase` - Health check
+
+**Services:**
+- `PromptService` - Coordinates generation with auto-unload timer
+- `ModelService` - Model lifecycle management
+- `HealthService` - Health status aggregation
+
+### Infrastructure Layer (`src/promptmill/infrastructure/`)
+
+**Adapters:**
+- `LlamaCppAdapter` - Implements `LLMPort` using llama-cpp-python
+- `HuggingFaceAdapter` - Implements `ModelRepositoryPort` using huggingface_hub
+- `NvidiaSmiAdapter` - Implements `GPUDetectorPort` using nvidia-smi
+- `RoleRepositoryAdapter` - Implements `RoleRepositoryPort` from static data
+
+**Configuration:**
+- `Settings` - Environment-based configuration
+- `MODEL_CONFIGS` - 7 model configurations keyed by VRAM tier
+- `ROLES_DATA` - 102 role definitions
+
+### Presentation Layer (`src/promptmill/presentation/`)
+
+- `GradioApp` - Gradio Blocks interface with event handlers
+- `PromptMillTheme` - Custom dark theme
+
+### Dependency Injection (`src/promptmill/container.py`)
+
+Manual DI container using `@property` decorators with lazy initialization:
+
+```python
+@dataclass
+class Container:
+    settings: Settings
+
+    @property
+    def llm(self) -> LLMPort:
+        return self._llm  # Lazy singleton
+
+    @property
+    def gradio_app(self) -> GradioApp:
+        # Wires all dependencies
+```
+
+### Entry Point (`src/promptmill/__main__.py`)
+
+```python
+def main() -> None:
+    settings = Settings.from_environment()
+    container = Container(settings=settings)
+    app = container.gradio_app
+    app.create()
+    app.launch(host=settings.host, port=settings.port)
+```
 
 ## Key Patterns
 
-- **Thread Safety**: `model_lock` protects global model state for concurrent requests
-- **Structured Logging**: All operations logged via Python's `logging` module
-- **Input Validation**: Prompt length, temperature, and token limits enforced
-- **Error Handling**: Specific exception types caught with descriptive messages
-- **Lazy Loading**: Heavy dependencies imported only when needed
-- **Auto-Cleanup**: Model unloads after 10 seconds to free VRAM
-- **Role System**: Format `[Category] RoleName` parsed by `parse_role_choice()`
+- **Hexagonal Architecture**: Domain isolated from infrastructure
+- **Dependency Injection**: Constructor injection, no framework
+- **Immutable Data**: `frozen=True, slots=True` dataclasses
+- **Python 3.12 Features**: `@override`, `StrEnum`, pattern matching, type aliases
+- **Lazy Loading**: Heavy dependencies (llama_cpp, huggingface_hub) imported only when needed
+- **Thread Safety**: RLock in PromptService for timer management
+- **Auto-Cleanup**: Model unloads after 10 seconds of inactivity
+- **Streaming**: Generator-based prompt generation
+
+## Model Configuration
+
+7 uncensored Dolphin LLM options scaled by VRAM (1B to 8B parameters):
+
+| VRAM | Model Key | Context |
+|------|-----------|---------|
+| CPU  | `cpu_only` | 4096 |
+| 4GB  | `4gb_vram` | 4096 |
+| 6GB  | `6gb_vram` | 4096 |
+| 8GB  | `8gb_vram` | 4096 |
+| 12GB | `12gb_vram` | 4096 |
+| 16GB+ | `16gb_vram` | 4096 |
+| 24GB+ | `24gb_vram` | 131072 |
 
 ## Testing
 
-Tests are in `tests/test_app.py`:
+Tests organized by layer in `tests/unit/`:
 
 ```bash
-# Run all tests
-pytest
+# Run all unit tests
+PYTHONPATH=src pytest tests/unit -v
 
-# Run with coverage
-pytest --cov=app
-
-# Run specific test class
-pytest tests/test_app.py::TestGPUDetection
+# Run specific layer
+PYTHONPATH=src pytest tests/unit/domain -v
+PYTHONPATH=src pytest tests/unit/application -v
+PYTHONPATH=src pytest tests/unit/infrastructure -v
 ```
 
 ## File Structure
 
 ```
 PromptMill/
-├── app.py              # Main application (~5000 lines)
-├── pyproject.toml      # Project config & dependencies
-├── README.md           # User documentation
-├── CLAUDE.md           # Developer guidance
+├── src/promptmill/
+│   ├── __init__.py              # Package + version
+│   ├── __main__.py              # Entry point
+│   ├── container.py             # DI container
+│   ├── domain/
+│   │   ├── entities/            # Model, Role, GPUInfo
+│   │   ├── value_objects/       # Request/Result VOs
+│   │   ├── ports/               # Abstract interfaces
+│   │   └── exceptions.py        # Domain exceptions
+│   ├── application/
+│   │   ├── use_cases/           # 6 use cases
+│   │   └── services/            # 3 services
+│   ├── infrastructure/
+│   │   ├── adapters/            # 4 adapters
+│   │   ├── config/              # Settings, ModelConfigs
+│   │   └── persistence/         # RolesData (102 roles)
+│   └── presentation/
+│       ├── gradio_app.py        # Gradio UI
+│       └── theme.py             # Dark theme
 ├── tests/
-│   ├── __init__.py
-│   └── test_app.py     # Unit tests
-├── assets/
-│   └── logo.svg        # Application logo
-├── Dockerfile.gpu      # CUDA build
-├── Dockerfile.cpu      # CPU build
-├── docker-compose.yml  # Docker orchestration
-└── models/             # Downloaded LLMs (persisted)
+│   ├── conftest.py              # Shared fixtures
+│   └── unit/                    # Layer-specific tests
+├── pyproject.toml               # Python 3.12+, src layout
+├── Dockerfile.cpu               # CPU build
+├── Dockerfile.gpu               # CUDA build
+├── docker-compose.yml           # Docker orchestration
+└── models/                      # Downloaded LLMs
 ```
 
 ## Code Quality
 
-- **Linting**: Ruff with strict rules (E, W, F, I, B, C4, UP, ARG, SIM, TCH, PTH, PL, RUF)
-- **Type Hints**: All functions have type annotations
-- **Docstrings**: Google-style docstrings on public functions
-- **Testing**: pytest with coverage reporting
+- **Python**: 3.12+ required (uses `@override`, `StrEnum`, etc.)
+- **Linting**: Ruff with strict rules targeting `py312`
+- **Type Hints**: Full type annotations throughout
+- **Testing**: pytest with 74+ unit tests
+- **Architecture**: Clean separation, no circular dependencies

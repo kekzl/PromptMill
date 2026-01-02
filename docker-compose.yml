@@ -3,17 +3,30 @@
 
 services:
   # GPU version - use with: docker compose --profile gpu up -d
-  promptmill:
+  promptmill-gpu:
     build:
       context: .
       dockerfile: Dockerfile.gpu
-    container_name: promptmill
+    container_name: promptmill-gpu
     profiles: ["gpu"]
     ports:
       - "7610:7610"
     volumes:
       - ./models:/app/models
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=7610
+      - MODELS_DIR=/app/models
+    env_file:
+      - path: .env
+        required: false
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7610/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     deploy:
       resources:
         reservations:
@@ -27,10 +40,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.cpu
-    container_name: promptmill
+    container_name: promptmill-cpu
     profiles: ["cpu"]
     ports:
       - "7610:7610"
     volumes:
       - ./models:/app/models
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=7610
+      - MODELS_DIR=/app/models
+    env_file:
+      - path: .env
+        required: false
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7610/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
