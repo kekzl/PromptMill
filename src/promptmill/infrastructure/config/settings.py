@@ -14,18 +14,12 @@ class Settings:
     """
 
     # Server configuration
-    host: str = field(
-        default_factory=lambda: os.environ.get("SERVER_HOST", "127.0.0.1")
-    )
-    port: int = field(
-        default_factory=lambda: int(os.environ.get("SERVER_PORT", "7610"))
-    )
+    host: str = field(default_factory=lambda: os.environ.get("SERVER_HOST", "127.0.0.1"))
+    port: int = field(default_factory=lambda: int(os.environ.get("SERVER_PORT", "7610")))
 
     # Model storage
     models_dir: Path = field(
-        default_factory=lambda: Path(
-            os.environ.get("MODELS_DIR", "/app/models")
-        )
+        default_factory=lambda: Path(os.environ.get("MODELS_DIR", "/app/models"))
     )
 
     # LLM configuration

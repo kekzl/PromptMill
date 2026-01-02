@@ -76,7 +76,7 @@ class Role:
         try:
             bracket_end = display_name.index("]")
             category_str = display_name[1:bracket_end]
-            name = display_name[bracket_end + 2:]  # Skip "] "
+            name = display_name[bracket_end + 2 :]  # Skip "] "
             return category_str, name
         except (ValueError, IndexError) as e:
             raise ValueError(f"Invalid display name format: {display_name}") from e

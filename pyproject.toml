@@ -1,6 +1,6 @@
 [project]
 name = "promptmill"
-version = "2.3.0"
+version = "3.0.0"
 description = "AI-powered prompt generator for video, image, and creative content"
 readme = "README.md"
 license = { text = "MIT" }

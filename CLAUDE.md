@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**PromptMill** (v2.3.0) - A self-contained Gradio web UI with **selectable LLMs based on GPU VRAM** for generating optimized prompts for:
+**PromptMill** (v3.0.0) - A self-contained Gradio web UI with **selectable LLMs based on GPU VRAM** for generating optimized prompts for:
 - **Video** (22 targets): Wan2.1, Wan2.2, Wan2.5, Hunyuan, Hunyuan 1.5, Runway Gen-3, Kling, Kling 2.1, Pika, Pika 2.1, Luma Dream Machine, Luma Ray2, Sora, Veo, Veo 3, Hailuo AI (MiniMax), Seedance, SkyReels V1, Mochi 1, CogVideoX, LTX Video, Open-Sora
 - **Image** (21 targets): Stable Diffusion, SD 3.5, Midjourney, FLUX, FLUX 2, DALL-E, ComfyUI, Ideogram, Leonardo, Firefly, Recraft, Imagen 3, Imagen 4, GPT-4o Images, Reve Image, HiDream-I1, Qwen-Image, Recraft V3, FLUX Kontext, Ideogram 3, Grok Image
 - **Audio** (13 targets): Suno AI, Udio, ElevenLabs, Eleven Music, Mureka AI, SOUNDRAW, Beatoven.ai, Stable Audio 2.0, MusicGen, Suno v4.5, ACE Studio, AIVA, Boomy

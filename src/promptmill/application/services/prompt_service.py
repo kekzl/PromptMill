@@ -87,9 +87,7 @@ class PromptService:
             )
             self._unload_timer.daemon = True
             self._unload_timer.start()
-            logger.debug(
-                f"Scheduled model unload in {self.unload_delay_seconds} seconds"
-            )
+            logger.debug(f"Scheduled model unload in {self.unload_delay_seconds} seconds")
 
     def _cancel_unload_timer(self) -> None:
         """Cancel any pending unload timer."""

@@ -11,6 +11,7 @@ else:
     def override(func: TypeVar("F")) -> TypeVar("F"):  # type: ignore[misc]
         return func  # type: ignore[return-value]
 
+
 from promptmill.domain.entities.role import Role, RoleCategory
 from promptmill.domain.ports.role_repository_port import RoleRepositoryPort
 from promptmill.infrastructure.persistence.roles_data import ROLES_DATA
@@ -32,9 +33,7 @@ class RoleRepositoryAdapter(RoleRepositoryPort):
         self._roles: list[Role] = []
         self._by_display_name: dict[str, Role] = {}
         self._by_name: dict[str, Role] = {}
-        self._by_category: dict[RoleCategory, list[Role]] = {
-            cat: [] for cat in RoleCategory
-        }
+        self._by_category: dict[RoleCategory, list[Role]] = {cat: [] for cat in RoleCategory}
 
         self._load_roles()
 
@@ -122,10 +121,7 @@ class RoleRepositoryAdapter(RoleRepositoryPort):
         Returns:
             List of categories that have at least one role.
         """
-        return [
-            cat for cat in RoleCategory
-            if self._by_category.get(cat)
-        ]
+        return [cat for cat in RoleCategory if self._by_category.get(cat)]
 
     @override
     def count(self) -> int:

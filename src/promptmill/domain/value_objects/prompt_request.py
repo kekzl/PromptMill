@@ -36,9 +36,7 @@ class PromptGenerationRequest:
             raise ValueError("User input cannot be empty")
 
         if len(self.user_input) > MAX_INPUT_LENGTH:
-            raise ValueError(
-                f"User input exceeds maximum length of {MAX_INPUT_LENGTH} characters"
-            )
+            raise ValueError(f"User input exceeds maximum length of {MAX_INPUT_LENGTH} characters")
 
         # Validate role
         if not self.role_display_name:
@@ -54,8 +52,7 @@ class PromptGenerationRequest:
         # Validate max_tokens
         if not MIN_TOKENS <= self.max_tokens <= MAX_TOKENS:
             raise ValueError(
-                f"Max tokens must be between {MIN_TOKENS} and {MAX_TOKENS}, "
-                f"got {self.max_tokens}"
+                f"Max tokens must be between {MIN_TOKENS} and {MAX_TOKENS}, got {self.max_tokens}"
             )
 
     @property

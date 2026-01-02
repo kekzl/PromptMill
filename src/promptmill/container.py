@@ -84,9 +84,7 @@ class Container:
     def gpu_detector(self) -> GPUDetectorPort:
         """Get GPU detector adapter instance."""
         if self._gpu_detector is None:
-            self._gpu_detector = NvidiaSmiAdapter(
-                timeout=self.settings.gpu_detection_timeout
-            )
+            self._gpu_detector = NvidiaSmiAdapter(timeout=self.settings.gpu_detection_timeout)
         return self._gpu_detector
 
     @property

@@ -15,6 +15,7 @@ else:
     def override(func: TypeVar("F")) -> TypeVar("F"):  # type: ignore[misc]
         return func  # type: ignore[return-value]
 
+
 from promptmill.domain.exceptions import ModelLoadError, ModelNotLoadedError
 from promptmill.domain.ports.llm_port import LLMPort
 
@@ -76,9 +77,7 @@ class LlamaCppAdapter(LLMPort):
             {"role": "user", "content": user_prompt},
         ]
 
-        logger.debug(
-            f"Generating with temp={temperature}, max_tokens={max_tokens}"
-        )
+        logger.debug(f"Generating with temp={temperature}, max_tokens={max_tokens}")
 
         try:
             response = self._llm.create_chat_completion(
@@ -145,9 +144,7 @@ class LlamaCppAdapter(LLMPort):
             self.unload()
 
         logger.info(f"Loading model: {model_path}")
-        logger.info(
-            f"Config: n_gpu_layers={n_gpu_layers}, n_ctx={context_length}"
-        )
+        logger.info(f"Config: n_gpu_layers={n_gpu_layers}, n_ctx={context_length}")
 
         try:
             # Lazy import to avoid loading llama_cpp until needed

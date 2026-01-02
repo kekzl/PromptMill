@@ -15,6 +15,7 @@ else:
     def override(func: TypeVar("F")) -> TypeVar("F"):  # type: ignore[misc]
         return func  # type: ignore[return-value]
 
+
 from promptmill.domain.entities.model import Model
 from promptmill.domain.exceptions import ModelDownloadError
 from promptmill.domain.ports.model_repository_port import ModelRepositoryPort

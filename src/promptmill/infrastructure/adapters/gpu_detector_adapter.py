@@ -12,6 +12,7 @@ else:
     def override(func: TypeVar("F")) -> TypeVar("F"):  # type: ignore[misc]
         return func  # type: ignore[return-value]
 
+
 from promptmill.domain.entities.gpu_info import GPUInfo
 from promptmill.domain.ports.gpu_detector_port import GPUDetectorPort
 
@@ -88,9 +89,7 @@ class NvidiaSmiAdapter(GPUDetectorPort):
             return None
 
         except subprocess.TimeoutExpired:
-            logger.warning(
-                f"GPU detection timed out after {self._timeout} seconds"
-            )
+            logger.warning(f"GPU detection timed out after {self._timeout} seconds")
             return None
 
         except (ValueError, IndexError) as e:

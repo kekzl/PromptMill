@@ -133,7 +133,9 @@ class GradioApp:
         Returns:
             Configured Gradio Blocks instance.
         """
-        role_choices = self.prompt_service.generate_prompt_use_case.role_repository.get_display_names()
+        role_choices = (
+            self.prompt_service.generate_prompt_use_case.role_repository.get_display_names()
+        )
         model_choices = self.model_service.get_model_names()
 
         # Build GPU status string
@@ -171,18 +173,14 @@ class GradioApp:
                     gr.Markdown("**Quick Examples:**")
                     with gr.Row():
                         ex_btns_row1 = [
-                            gr.Button(EXAMPLE_PROMPTS[i][0], size="sm")
-                            for i in range(3)
+                            gr.Button(EXAMPLE_PROMPTS[i][0], size="sm") for i in range(3)
                         ]
                     with gr.Row():
                         ex_btns_row2 = [
-                            gr.Button(EXAMPLE_PROMPTS[i][0], size="sm")
-                            for i in range(3, 6)
+                            gr.Button(EXAMPLE_PROMPTS[i][0], size="sm") for i in range(3, 6)
                         ]
 
-                    generate_btn = gr.Button(
-                        "Generate Prompt", variant="primary", size="lg"
-                    )
+                    generate_btn = gr.Button("Generate Prompt", variant="primary", size="lg")
 
                     output = gr.Textbox(
                         label="Generated Prompt",
@@ -199,9 +197,7 @@ class GradioApp:
                             f"### LLM for Prompt Generation\n*Auto-detected: {self.gpu_info.vram_gb:.0f}GB VRAM*"
                         )
                     else:
-                        gr.Markdown(
-                            "### LLM for Prompt Generation\n*No GPU detected - using CPU*"
-                        )
+                        gr.Markdown("### LLM for Prompt Generation\n*No GPU detected - using CPU*")
 
                     model_dropdown = gr.Dropdown(
                         label="Select by Your GPU VRAM",
@@ -212,9 +208,7 @@ class GradioApp:
                         else "Select manually or use CPU model",
                     )
 
-                    model_info = gr.Markdown(
-                        value=self._get_model_info(self.default_model.name)
-                    )
+                    model_info = gr.Markdown(value=self._get_model_info(self.default_model.name))
 
                     gr.Markdown("### Output Settings")
 
@@ -249,14 +243,10 @@ class GradioApp:
 
                     # Model Management
                     with gr.Accordion("Model Management", open=False):
-                        models_status = gr.Markdown(
-                            value="Click refresh to see downloaded models"
-                        )
+                        models_status = gr.Markdown(value="Click refresh to see downloaded models")
                         with gr.Row():
                             refresh_models_btn = gr.Button("Refresh", size="sm")
-                            delete_all_btn = gr.Button(
-                                "Delete All", size="sm", variant="stop"
-                            )
+                            delete_all_btn = gr.Button("Delete All", size="sm", variant="stop")
                         model_to_delete = gr.Dropdown(
                             label="Select Model to Delete",
                             choices=[],
@@ -355,14 +345,28 @@ class GradioApp:
         # Generate button
         generate_btn.click(
             fn=self._generate_prompt,
-            inputs=[user_idea, role_dropdown, model_dropdown, temperature, max_tokens, n_gpu_layers],
+            inputs=[
+                user_idea,
+                role_dropdown,
+                model_dropdown,
+                temperature,
+                max_tokens,
+                n_gpu_layers,
+            ],
             outputs=output,
         )
 
         # Submit on enter
         user_idea.submit(
             fn=self._generate_prompt,
-            inputs=[user_idea, role_dropdown, model_dropdown, temperature, max_tokens, n_gpu_layers],
+            inputs=[
+                user_idea,
+                role_dropdown,
+                model_dropdown,
+                temperature,
+                max_tokens,
+                n_gpu_layers,
+            ],
             outputs=output,
         )
 
@@ -507,7 +511,9 @@ class GradioApp:
         count = 0
 
         for model in models:
-            if self.model_service.is_model_downloaded(model) and self.model_service.delete_model(model):
+            if self.model_service.is_model_downloaded(model) and self.model_service.delete_model(
+                model
+            ):
                 count += 1
 
         if count > 0:

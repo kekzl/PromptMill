@@ -212,10 +212,12 @@ def _patch_llama():
     # Create mock module
     mock_llama_cpp = MagicMock()
     mock_instance = MagicMock()
-    mock_instance.create_chat_completion.return_value = iter([
-        {"choices": [{"delta": {"content": "Test "}}]},
-        {"choices": [{"delta": {"content": "response"}}]},
-    ])
+    mock_instance.create_chat_completion.return_value = iter(
+        [
+            {"choices": [{"delta": {"content": "Test "}}]},
+            {"choices": [{"delta": {"content": "response"}}]},
+        ]
+    )
     mock_llama_cpp.Llama.return_value = mock_instance
 
     # Inject mock module

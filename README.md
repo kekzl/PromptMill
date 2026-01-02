@@ -171,6 +171,29 @@ SERVER_PORT=8080 python -m promptmill
 
 ---
 
+## 🔌 API & Health Check
+
+PromptMill exposes a health endpoint for container orchestration:
+
+```bash
+# Health check
+curl http://localhost:7610/health
+```
+
+Response:
+```json
+{
+  "status": "healthy",
+  "version": "3.0.0",
+  "model_loaded": false,
+  "roles_count": 102
+}
+```
+
+The Gradio API is also available at `/api/` for programmatic access.
+
+---
+
 ## 📁 Project Structure
 
 ```
