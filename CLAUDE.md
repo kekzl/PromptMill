@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**PromptMill** (v2.2.0) - A self-contained Gradio web UI with **selectable LLMs based on GPU VRAM** for generating optimized prompts for:
-- **Video** (18 targets): Wan2.1, Wan2.2, Wan2.5, Hunyuan, Hunyuan 1.5, Runway Gen-3, Kling, Kling 2.1, Pika, Pika 2.1, Luma Dream Machine, Luma Ray2, Sora, Veo, Veo 3, Hailuo AI (MiniMax), Seedance, SkyReels V1
-- **Image** (17 targets): Stable Diffusion, SD 3.5, Midjourney, FLUX, FLUX 2, DALL-E, ComfyUI, Ideogram, Leonardo, Firefly, Recraft, Imagen 3, Imagen 4, GPT-4o Images, Reve Image, HiDream-I1, Qwen-Image
-- **Audio** (9 targets): Suno AI, Udio, ElevenLabs, Eleven Music, Mureka AI, SOUNDRAW, Beatoven.ai, Stable Audio 2.0, MusicGen
-- **3D** (8 targets): Meshy, Tripo AI, Rodin, Spline, Sloyd, 3DFY.ai, Luma Genie, Masterpiece X
+**PromptMill** (v2.3.0) - A self-contained Gradio web UI with **selectable LLMs based on GPU VRAM** for generating optimized prompts for:
+- **Video** (22 targets): Wan2.1, Wan2.2, Wan2.5, Hunyuan, Hunyuan 1.5, Runway Gen-3, Kling, Kling 2.1, Pika, Pika 2.1, Luma Dream Machine, Luma Ray2, Sora, Veo, Veo 3, Hailuo AI (MiniMax), Seedance, SkyReels V1, Mochi 1, CogVideoX, LTX Video, Open-Sora
+- **Image** (21 targets): Stable Diffusion, SD 3.5, Midjourney, FLUX, FLUX 2, DALL-E, ComfyUI, Ideogram, Leonardo, Firefly, Recraft, Imagen 3, Imagen 4, GPT-4o Images, Reve Image, HiDream-I1, Qwen-Image, Recraft V3, FLUX Kontext, Ideogram 3, Grok Image
+- **Audio** (13 targets): Suno AI, Udio, ElevenLabs, Eleven Music, Mureka AI, SOUNDRAW, Beatoven.ai, Stable Audio 2.0, MusicGen, Suno v4.5, ACE Studio, AIVA, Boomy
+- **3D** (12 targets): Meshy, Tripo AI, Rodin, Spline, Sloyd, 3DFY.ai, Luma Genie, Masterpiece X, Hunyuan3D, Trellis, TripoSR, Unique3D
 - **Creative** (34 targets): Story, code, technical docs, marketing, SEO, screenplays, social media, podcasts, UX, press releases, poetry, data analysis, business plans, academic writing, tutorials, newsletters, legal docs, grant writing, API documentation, courses, pitch decks, meeting notes, changelogs, recipes, travel guides, workout plans
 
-**Total: 86 specialized prompt templates**
+**Total: 102 specialized prompt templates**
 
 ## Commands
 
@@ -107,7 +107,7 @@ pytest tests/test_app.py::TestGPUDetection
 
 ```
 PromptMill/
-├── app.py              # Main application (~4200 lines)
+├── app.py              # Main application (~5000 lines)
 ├── pyproject.toml      # Project config & dependencies
 ├── README.md           # User documentation
 ├── CLAUDE.md           # Developer guidance
