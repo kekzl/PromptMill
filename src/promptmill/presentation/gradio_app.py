@@ -8,6 +8,9 @@ from pathlib import Path
 from typing import Any
 
 import gradio as gr
+import uvicorn
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 
 from promptmill import __version__
 from promptmill.application.services.health_service import HealthService
@@ -223,7 +226,7 @@ class GradioApp:
 
             # Event handlers
             self._setup_event_handlers(
-                app=app,
+                app,
                 role_dropdown=role_dropdown,
                 role_info=role_info,
                 model_dropdown=model_dropdown,
@@ -491,14 +494,24 @@ class GradioApp:
             logger.warning(f"Failed to load logo: {e}")
         return '<h1 style="color: #818cf8; margin: 0;">PromptMill</h1>'
 
-    def add_health_endpoint(self) -> None:
-        """Add health check endpoint to the FastAPI app."""
-        if self._app is None:
-            return
+    def _create_fastapi_app(self) -> FastAPI:
+        """Create FastAPI app with health endpoint and Gradio mounted.
 
-        @self._app.app.get("/health")
-        def health_check() -> dict[str, Any]:
-            return dict(self.health_service.get_status())
+        Returns:
+            Configured FastAPI application.
+        """
+        fastapi_app = FastAPI(title="PromptMill", version=__version__)
+
+        @fastapi_app.get("/health")
+        def health_check() -> JSONResponse:
+            """Health check endpoint for container orchestration."""
+            status = self.health_service.get_status()
+            return JSONResponse(content=dict(status))
+
+        # Mount Gradio app at root
+        fastapi_app = gr.mount_gradio_app(fastapi_app, self._app, path="/")
+
+        return fastapi_app
 
     def launch(self, host: str, port: int) -> None:
         """Launch the Gradio application.
@@ -510,12 +523,7 @@ class GradioApp:
         if self._app is None:
             self.create()
 
-        self.add_health_endpoint()
+        fastapi_app = self._create_fastapi_app()
 
         logger.info(f"Starting server on {host}:{port}")
-        self._app.launch(
-            server_name=host,
-            server_port=port,
-            share=False,
-            show_error=True,
-        )
+        uvicorn.run(fastapi_app, host=host, port=port, log_level="info")
