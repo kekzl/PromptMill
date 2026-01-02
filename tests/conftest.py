@@ -19,7 +19,6 @@ from promptmill.domain.ports.model_repository_port import ModelRepositoryPort
 from promptmill.domain.ports.role_repository_port import RoleRepositoryPort
 from promptmill.infrastructure.config.settings import Settings
 
-
 # =============================================================================
 # Domain Fixtures
 # =============================================================================
@@ -94,7 +93,7 @@ def mock_llm() -> MagicMock:
     mock.is_loaded.return_value = False
     mock.get_loaded_model_path.return_value = None
 
-    def generate_mock(*args, **kwargs):
+    def generate_mock(*_args, **_kwargs):
         yield "Test "
         yield "response "
         yield "content"
@@ -203,7 +202,7 @@ def mock_model_file(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def patch_llama():
+def _patch_llama():
     """Patch the Llama class from llama_cpp (lazily imported).
 
     Creates a mock llama_cpp module since it may not be installed.

@@ -15,7 +15,6 @@ from promptmill.domain.entities.model import Model
 from promptmill.domain.entities.role import Role
 from promptmill.domain.exceptions import ModelNotLoadedError, RoleNotFoundError
 from promptmill.domain.value_objects.prompt_request import PromptGenerationRequest
-from promptmill.infrastructure.config.model_configs import MODEL_CONFIGS
 
 
 class TestGeneratePromptUseCase:
@@ -240,7 +239,7 @@ class TestSelectModelByVRAMUseCase:
         )
 
         use_case = SelectModelByVRAMUseCase(gpu_detector=mock_gpu_detector)
-        model, gpu_info = use_case.execute()
+        model, _gpu_info = use_case.execute()
 
         assert model.key == "8gb_vram"
 
@@ -256,6 +255,6 @@ class TestSelectModelByVRAMUseCase:
         )
 
         use_case = SelectModelByVRAMUseCase(gpu_detector=mock_gpu_detector)
-        model, gpu_info = use_case.execute()
+        model, _gpu_info = use_case.execute()
 
         assert model.key == "4gb_vram"

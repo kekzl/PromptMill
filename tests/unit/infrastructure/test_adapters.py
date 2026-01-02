@@ -5,9 +5,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from promptmill.domain.entities.gpu_info import GPUInfo
 from promptmill.domain.entities.model import Model
-from promptmill.domain.exceptions import ModelLoadError, ModelNotLoadedError
+from promptmill.domain.exceptions import ModelNotLoadedError
 from promptmill.infrastructure.adapters.gpu_detector_adapter import NvidiaSmiAdapter
 from promptmill.infrastructure.adapters.huggingface_adapter import HuggingFaceAdapter
 from promptmill.infrastructure.adapters.llama_cpp_adapter import LlamaCppAdapter
@@ -39,7 +38,7 @@ class TestLlamaCppAdapter:
                 context_length=4096,
             )
 
-    def test_load_success(self, mock_model_file: Path, patch_llama) -> None:
+    def test_load_success(self, mock_model_file: Path, _patch_llama) -> None:
         """Test successful model loading."""
         adapter = LlamaCppAdapter()
         adapter.load(
@@ -51,7 +50,7 @@ class TestLlamaCppAdapter:
         assert adapter.is_loaded() is True
         assert adapter.get_loaded_model_path() == str(mock_model_file)
 
-    def test_unload_success(self, mock_model_file: Path, patch_llama) -> None:
+    def test_unload_success(self, mock_model_file: Path, _patch_llama) -> None:
         """Test successful model unloading."""
         adapter = LlamaCppAdapter()
         adapter.load(str(mock_model_file), n_gpu_layers=-1, context_length=4096)
