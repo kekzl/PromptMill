@@ -23,6 +23,64 @@ from promptmill.presentation.theme import create_theme
 
 logger = logging.getLogger(__name__)
 
+# Custom CSS for improved dropdown contrast
+CUSTOM_CSS = """
+/* Dropdown menu styling - dark background with high contrast text */
+.svelte-1gfkn6j {
+    background-color: #18181b !important;
+    border-color: #3f3f46 !important;
+}
+
+/* Dropdown options */
+.svelte-1gfkn6j ul {
+    background-color: #18181b !important;
+}
+
+.svelte-1gfkn6j li {
+    color: #fafafa !important;
+    background-color: #18181b !important;
+}
+
+.svelte-1gfkn6j li:hover {
+    background-color: #27272a !important;
+    color: #ffffff !important;
+}
+
+.svelte-1gfkn6j li[aria-selected="true"] {
+    background-color: #3f3f46 !important;
+    color: #ffffff !important;
+}
+
+/* Generic dropdown/listbox styling */
+[role="listbox"] {
+    background-color: #18181b !important;
+    border-color: #3f3f46 !important;
+}
+
+[role="option"] {
+    color: #fafafa !important;
+    background-color: #18181b !important;
+}
+
+[role="option"]:hover {
+    background-color: #27272a !important;
+}
+
+[role="option"][aria-selected="true"] {
+    background-color: #3f3f46 !important;
+}
+
+/* Input text color */
+input, textarea, select {
+    color: #fafafa !important;
+}
+
+/* Ensure dropdown text is visible */
+.wrap.svelte-1gfkn6j {
+    color: #fafafa !important;
+}
+"""
+
 # Example prompts for quick start
 EXAMPLE_PROMPTS = [
     (
@@ -84,7 +142,7 @@ class GradioApp:
         else:
             gpu_status = "CPU mode (no GPU detected)"
 
-        with gr.Blocks(title="PromptMill", theme=create_theme()) as app:
+        with gr.Blocks(title="PromptMill", theme=create_theme(), css=CUSTOM_CSS) as app:
             # Header
             gr.HTML(self._create_header_html(gpu_status))
 
