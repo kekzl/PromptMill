@@ -36,6 +36,24 @@ PromptMill is a self-contained web UI that runs **entirely locally** - no API ke
 
 ---
 
+## 📸 Screenshots
+
+<div align="center">
+
+### Main Interface
+<img src="assets/screenshot-main.png" alt="PromptMill Main Interface" width="800">
+
+*Clean dark UI with quick examples and customizable generation settings*
+
+### 102 AI Model Targets
+<img src="assets/screenshot-models.png" alt="PromptMill Model Selection" width="800">
+
+*Support for Video, Image, Audio, 3D, and Creative AI tools*
+
+</div>
+
+---
+
 ## ✨ Features
 
 - **Smart GPU Detection** - Automatically selects the best model for your VRAM

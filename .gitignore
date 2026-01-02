@@ -26,3 +26,4 @@ Thumbs.db
 # Misc
 *.log
 .ruff_cache/
+.playwright-mcp/
