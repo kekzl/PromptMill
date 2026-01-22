@@ -252,8 +252,8 @@ class TestRoleRepositoryAdapter:
         adapter = RoleRepositoryAdapter()
         count = adapter.count()
 
-        # Should have 102 roles based on documentation
-        assert count == 102
+        # Should have 132 roles based on documentation (v3.1.0)
+        assert count == 132
 
     def test_get_categories(self) -> None:
         """Test getting available categories."""
