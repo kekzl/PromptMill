@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**PromptMill** (v3.0.0) - A self-contained Gradio web UI with **selectable LLMs based on GPU VRAM** for generating optimized prompts for:
-- **Video** (22 targets): Wan2.1, Wan2.2, Wan2.5, Hunyuan, Hunyuan 1.5, Runway Gen-3, Kling, Kling 2.1, Pika, Pika 2.1, Luma Dream Machine, Luma Ray2, Sora, Veo, Veo 3, Hailuo AI (MiniMax), Seedance, SkyReels V1, Mochi 1, CogVideoX, LTX Video, Open-Sora
-- **Image** (21 targets): Stable Diffusion, SD 3.5, Midjourney, FLUX, FLUX 2, DALL-E, ComfyUI, Ideogram, Leonardo, Firefly, Recraft, Imagen 3, Imagen 4, GPT-4o Images, Reve Image, HiDream-I1, Qwen-Image, Recraft V3, FLUX Kontext, Ideogram 3, Grok Image
-- **Audio** (13 targets): Suno AI, Udio, ElevenLabs, Eleven Music, Mureka AI, SOUNDRAW, Beatoven.ai, Stable Audio 2.0, MusicGen, Suno v4.5, ACE Studio, AIVA, Boomy
-- **3D** (12 targets): Meshy, Tripo AI, Rodin, Spline, Sloyd, 3DFY.ai, Luma Genie, Masterpiece X, Hunyuan3D, Trellis, TripoSR, Unique3D
+**PromptMill** (v3.1.0) - A self-contained Gradio web UI with **selectable LLMs based on GPU VRAM** for generating optimized prompts for:
+- **Video** (31 targets): Wan2.1, Wan2.2, Wan2.5, Hunyuan Video, Hunyuan Video 1.5, Runway Gen-3, Runway Gen-4.5, Kling AI, Kling 2.1, Kling 2.5, Kling Video O1, Pika Labs, Pika 2.1, Pika 2.2, Luma Dream Machine, Luma Ray2, Sora, Sora 2, Veo, Veo 3, Veo 3.1, Hailuo AI, Seedance, SkyReels V1, Mochi 1, CogVideoX, LTX Video, Open-Sora, MovieGen, Pyramid Flow, Allegro
+- **Image** (31 targets): Stable Diffusion, SD 3.5, Midjourney, Midjourney v7, FLUX, FLUX 2, FLUX Pro, FLUX 2 Max, DALL-E 3, ComfyUI, Ideogram, Ideogram 3, Leonardo AI, Adobe Firefly, Adobe Firefly 3, Recraft, Recraft V3, Imagen 3, Imagen 4, GPT-4o Images, GPT Image 1.5, Reve Image, HiDream-I1, Qwen-Image, FLUX Kontext, Grok Image, Hunyuan Image 3.0, Seedream 4.5, Gemini 3 Pro Image, Playground v3, Krea AI
+- **Audio** (18 targets): Suno AI, Suno v4.5, Suno v5, Udio, Udio 2.0, ElevenLabs, Eleven Music, Mureka AI, SOUNDRAW, Beatoven.ai, Stable Audio 2.0, MusicGen, ACE Studio, AIVA, Boomy, Google MusicFX, Riffusion, Bark
+- **3D** (18 targets): Meshy, Meshy 4, Tripo AI, Tripo 2.0, Rodin, Rodin Gen-2, Spline, Sloyd, 3DFY.ai, Luma Genie, Masterpiece X, Hunyuan3D, Trellis, TripoSR, Unique3D, SF3D, InstantMesh, CSM 3D
 - **Creative** (34 targets): Story, code, technical docs, marketing, SEO, screenplays, social media, podcasts, UX, press releases, poetry, data analysis, business plans, academic writing, tutorials, newsletters, legal docs, grant writing, API documentation, courses, pitch decks, meeting notes, changelogs, recipes, travel guides, workout plans
 
-**Total: 102 specialized prompt templates**
+**Total: 132 specialized prompt templates**
 
 ## Commands
 
@@ -107,7 +107,7 @@ Pure Python with no external dependencies.
 **Configuration:**
 - `Settings` - Environment-based configuration
 - `MODEL_CONFIGS` - 7 model configurations keyed by VRAM tier
-- `ROLES_DATA` - 102 role definitions
+- `ROLES_DATA` - 132 role definitions
 
 ### Presentation Layer (`src/promptmill/presentation/`)
 
@@ -201,7 +201,7 @@ PromptMill/
 │   ├── infrastructure/
 │   │   ├── adapters/            # 4 adapters
 │   │   ├── config/              # Settings, ModelConfigs
-│   │   └── persistence/         # RolesData (102 roles)
+│   │   └── persistence/         # RolesData (132 roles)
 │   └── presentation/
 │       ├── gradio_app.py        # Gradio UI
 │       └── theme.py             # Dark theme
