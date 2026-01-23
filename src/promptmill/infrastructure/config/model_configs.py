@@ -13,6 +13,7 @@ MODEL_CONFIGS: dict[str, Model] = {
         n_gpu_layers=0,  # CPU only
         description="Dolphin 3.0 1B Q8 - Uncensored, lightweight",
         vram_required="~1GB",
+        revision="main",
     ),
     "4gb_vram": Model(
         key="4gb_vram",
@@ -23,6 +24,7 @@ MODEL_CONFIGS: dict[str, Model] = {
         n_gpu_layers=-1,  # All layers on GPU
         description="Dolphin 3.0 3B Q4_K_M - Uncensored, good balance",
         vram_required="~2.5GB",
+        revision="main",
     ),
     "6gb_vram": Model(
         key="6gb_vram",
@@ -33,6 +35,7 @@ MODEL_CONFIGS: dict[str, Model] = {
         n_gpu_layers=-1,
         description="Dolphin 3.0 3B Q8 - Uncensored, high quality",
         vram_required="~4GB",
+        revision="main",
     ),
     "8gb_vram": Model(
         key="8gb_vram",
@@ -43,6 +46,7 @@ MODEL_CONFIGS: dict[str, Model] = {
         n_gpu_layers=-1,
         description="Dolphin 3.0 8B Q4_K_M - Uncensored, excellent",
         vram_required="~6GB",
+        revision="main",
     ),
     "12gb_vram": Model(
         key="12gb_vram",
@@ -53,6 +57,7 @@ MODEL_CONFIGS: dict[str, Model] = {
         n_gpu_layers=-1,
         description="Dolphin 3.0 8B Q6_K_L - Uncensored, premium",
         vram_required="~10GB",
+        revision="main",
     ),
     "16gb_vram": Model(
         key="16gb_vram",
@@ -63,6 +68,7 @@ MODEL_CONFIGS: dict[str, Model] = {
         n_gpu_layers=-1,
         description="Dolphin 3.0 8B Q8 - Uncensored, maximum quality",
         vram_required="~12GB",
+        revision="main",
     ),
     "24gb_vram": Model(
         key="24gb_vram",
@@ -73,6 +79,7 @@ MODEL_CONFIGS: dict[str, Model] = {
         n_gpu_layers=-1,
         description="Dolphin 2.9.4 8B Q8 - Uncensored, maximum precision",
         vram_required="~10GB",
+        revision="main",
     ),
 }
 
