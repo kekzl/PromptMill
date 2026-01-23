@@ -80,9 +80,10 @@ class HuggingFaceAdapter(ModelRepositoryPort):
             # Lazy import to avoid loading huggingface_hub until needed
             from huggingface_hub import hf_hub_download
 
-            local_path = hf_hub_download(
+            local_path = hf_hub_download(  # nosec B615
                 repo_id=model.repo_id,
                 filename=model.filename,
+                revision=model.revision,
                 local_dir=self._models_dir,
                 local_dir_use_symlinks=False,
             )

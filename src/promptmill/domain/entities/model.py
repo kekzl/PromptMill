@@ -20,6 +20,7 @@ class Model:
         n_gpu_layers: Number of layers to offload to GPU (-1 for all).
         description: Human-readable description of the model.
         vram_required: Approximate VRAM requirement string.
+        revision: Git revision (commit hash) for reproducible downloads.
     """
 
     key: str
@@ -30,6 +31,7 @@ class Model:
     n_gpu_layers: int
     description: str
     vram_required: str
+    revision: str | None = None
 
     def get_local_path(self, models_dir: Path) -> Path:
         """Get the expected local file path for this model.

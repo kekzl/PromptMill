@@ -1,7 +1,7 @@
 """NVIDIA SMI GPU detector adapter implementing GPUDetectorPort."""
 
 import logging
-import subprocess
+import subprocess  # nosec B404 - Required for nvidia-smi GPU detection
 import sys
 
 if sys.version_info >= (3, 12):
@@ -47,7 +47,7 @@ class NvidiaSmiAdapter(GPUDetectorPort):
             GPUInfo if a GPU is detected, None if no GPU available.
         """
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 B607
                 [
                     "nvidia-smi",
                     "--query-gpu=name,memory.total,driver_version",
