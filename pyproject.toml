@@ -97,8 +97,6 @@ ignore = [
     "PLW0603", # global statement (valid pattern for singleton model)
     "PLW2901", # loop variable overwritten
     "PLC0415", # import not at top level (lazy imports for heavy deps)
-    "UP036",   # version block needed for Python 3.11/3.12 compat (@override)
-    "UP040",   # TypeAlias needed for Python 3.11 compat (tests run on 3.11)
 ]
 
 [tool.ruff.lint.isort]
