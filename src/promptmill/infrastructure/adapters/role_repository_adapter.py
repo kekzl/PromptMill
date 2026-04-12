@@ -1,16 +1,7 @@
 """Role repository adapter implementing RoleRepositoryPort."""
 
 import logging
-import sys
-
-if sys.version_info >= (3, 12):
-    from typing import override
-else:
-    from typing import TypeVar
-
-    def override(func: TypeVar("F")) -> TypeVar("F"):  # type: ignore[misc]
-        return func  # type: ignore[return-value]
-
+from typing import override
 
 from promptmill.domain.entities.role import Role, RoleCategory
 from promptmill.domain.ports.role_repository_port import RoleRepositoryPort

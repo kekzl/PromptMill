@@ -3,18 +3,9 @@
 import contextlib
 import logging
 import shutil
-import sys
 from collections.abc import Callable
 from pathlib import Path
-
-if sys.version_info >= (3, 12):
-    from typing import override
-else:
-    from typing import TypeVar
-
-    def override(func: TypeVar("F")) -> TypeVar("F"):  # type: ignore[misc]
-        return func  # type: ignore[return-value]
-
+from typing import override
 
 from promptmill.domain.entities.model import Model
 from promptmill.domain.exceptions import ModelDownloadError
@@ -153,8 +144,9 @@ class HuggingFaceAdapter(ModelRepositoryPort):
         Returns:
             Human-readable size string (e.g., "4.5 GB").
         """
+        size = float(size_bytes)
         for unit in ("B", "KB", "MB", "GB", "TB"):
-            if abs(size_bytes) < 1024:
-                return f"{size_bytes:.1f} {unit}"
-            size_bytes /= 1024
-        return f"{size_bytes:.1f} PB"
+            if abs(size) < 1024:
+                return f"{size:.1f} {unit}"
+            size /= 1024
+        return f"{size:.1f} PB"

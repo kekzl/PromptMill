@@ -130,8 +130,9 @@ class ModelService:
 
     def _format_size(self, size_bytes: int) -> str:
         """Format size in human-readable format."""
+        size = float(size_bytes)
         for unit in ("B", "KB", "MB", "GB", "TB"):
-            if abs(size_bytes) < 1024:
-                return f"{size_bytes:.1f} {unit}"
-            size_bytes /= 1024
-        return f"{size_bytes:.1f} PB"
+            if abs(size) < 1024:
+                return f"{size:.1f} {unit}"
+            size /= 1024
+        return f"{size:.1f} PB"

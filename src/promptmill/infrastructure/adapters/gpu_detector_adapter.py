@@ -2,16 +2,7 @@
 
 import logging
 import subprocess  # nosec B404 - Required for nvidia-smi GPU detection
-import sys
-
-if sys.version_info >= (3, 12):
-    from typing import override
-else:
-    from typing import TypeVar
-
-    def override(func: TypeVar("F")) -> TypeVar("F"):  # type: ignore[misc]
-        return func  # type: ignore[return-value]
-
+from typing import override
 
 from promptmill.domain.entities.gpu_info import GPUInfo
 from promptmill.domain.ports.gpu_detector_port import GPUDetectorPort

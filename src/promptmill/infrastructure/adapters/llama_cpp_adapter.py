@@ -2,19 +2,9 @@
 
 import gc
 import logging
-import sys
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
-
-if sys.version_info >= (3, 12):
-    from typing import override
-else:
-    from typing import TypeVar
-
-    def override(func: TypeVar("F")) -> TypeVar("F"):  # type: ignore[misc]
-        return func  # type: ignore[return-value]
-
+from typing import Any, override
 
 from promptmill.domain.exceptions import ModelLoadError, ModelNotLoadedError
 from promptmill.domain.ports.llm_port import LLMPort

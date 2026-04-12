@@ -12,11 +12,9 @@ Total roles: 132
 - Creative: 34 targets
 """
 
-# Type alias for role data structure (compatible with Python 3.11+)
-from typing import TypeAlias
-
-RoleData: TypeAlias = dict[str, str]
-RolesDict: TypeAlias = dict[str, RoleData]
+# Type aliases for role data structure (Python 3.12+ syntax)
+type RoleData = dict[str, str]
+type RolesDict = dict[str, RoleData]
 
 # =============================================================================
 # ROLE DEFINITIONS

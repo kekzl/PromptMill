@@ -115,6 +115,7 @@ class Container:
     def default_model(self) -> Model:
         """Get the default model based on detected GPU."""
         self._ensure_gpu_detection()
+        assert self._selected_model is not None, "GPU detection must set a default model"
         return self._selected_model
 
     # =========================================================================
