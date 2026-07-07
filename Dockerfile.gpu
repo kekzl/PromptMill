@@ -4,7 +4,7 @@
 # =============================================================================
 # Stage 1: Build llama-cpp-python with CUDA support
 # =============================================================================
-FROM nvidia/cuda:12.6.3-devel-ubuntu22.04 AS builder
+FROM nvidia/cuda:13.3.0-devel-ubuntu22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
@@ -52,7 +52,7 @@ RUN pip install --no-cache-dir "llama-cpp-python>=0.3.0,<1.0.0"
 # =============================================================================
 # Stage 2: Runtime image (smaller, no build tools)
 # =============================================================================
-FROM nvidia/cuda:12.6.3-runtime-ubuntu22.04
+FROM nvidia/cuda:13.3.0-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
