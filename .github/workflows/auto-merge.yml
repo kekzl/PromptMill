@@ -1,0 +1,51 @@
+name: Auto-merge
+
+# Enables squash auto-merge automatically so PRs land as soon as required
+# checks pass and the branch is mergeable (no manual "Enable auto-merge" click).
+#
+# Scope:
+# - Repo-owner PRs: always (community PRs still need manual review).
+# - Dependabot PRs: patch and minor updates only. Major bumps stay open for a
+#   human, because CI only builds the CPU image (the GPU/CUDA Dockerfile and
+#   runtime are not exercised here).
+# - Drafts are skipped; ready_for_review re-fires the workflow.
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  owner:
+    name: Auto-merge owner PRs
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.user.login == github.repository_owner
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Enable squash auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --auto --squash "$PR_URL"
+
+  dependabot:
+    name: Auto-merge Dependabot patch/minor
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@v2
+
+      - name: Enable squash auto-merge (patch/minor only)
+        if: >-
+          steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+          steps.meta.outputs.update-type == 'version-update:semver-minor'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --auto --squash "$PR_URL"
