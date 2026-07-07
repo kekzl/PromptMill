@@ -7,7 +7,7 @@
 **AI-powered prompt generator for video, image, and creative content**
 
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![Gradio](https://img.shields.io/badge/Gradio-4.x-FF6F00?style=flat-square&logo=gradio&logoColor=white)](https://gradio.app)
+[![Gradio](https://img.shields.io/badge/Gradio-6.x-FF6F00?style=flat-square&logo=gradio&logoColor=white)](https://gradio.app)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://docker.com)
 [![Ruff](https://img.shields.io/badge/Ruff-Linted-D7FF64?style=flat-square&logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENSE)
@@ -26,7 +26,7 @@ PromptMill is a self-contained web UI that runs **entirely locally** - no API ke
 <div align="center">
 <table>
 <tr>
-<td align="center"><b>102</b><br><sub>Preset Roles</sub></td>
+<td align="center"><b>132</b><br><sub>Preset Roles</sub></td>
 <td align="center"><b>7</b><br><sub>LLM Options</sub></td>
 <td align="center"><b>1B-8B</b><br><sub>Parameters</sub></td>
 <td align="center"><b>100%</b><br><sub>Local</sub></td>
@@ -45,7 +45,7 @@ PromptMill is a self-contained web UI that runs **entirely locally** - no API ke
 
 *Clean dark UI with quick examples and customizable generation settings*
 
-### 102 AI Model Targets
+### 132 AI Model Targets
 <img src="assets/screenshot-models.png" alt="PromptMill Model Selection" width="800">
 
 *Support for Video, Image, Audio, 3D, and Creative AI tools*
@@ -58,7 +58,7 @@ PromptMill is a self-contained web UI that runs **entirely locally** - no API ke
 
 - **Smart GPU Detection** - Automatically selects the best model for your VRAM
 - **7 LLM Tiers** - From 1B (CPU) to 8B parameters (24GB+ VRAM) using Dolphin models
-- **102 Specialized Roles** - Video (22), Image (21), Audio (13), 3D (12), and Creative (34)
+- **132 Specialized Roles** - Video (31), Image (31), Audio (18), 3D (18), and Creative (34)
 - **Dark Mode UI** - Modern interface with streaming generation
 - **Model Cleanup** - Delete downloaded models to free disk space
 - **Zero Config** - Works out of the box with Docker
@@ -105,23 +105,23 @@ python -m promptmill
 <tr>
 <td width="50%">
 
-### 🎬 Video (22)
-Wan2.1, Wan2.2, Wan2.5, Hunyuan Video, Hunyuan 1.5, Runway Gen-3, Kling AI, Kling 2.1, Pika Labs, Pika 2.1, Luma Dream Machine, Luma Ray2, Sora, Veo, Veo 3, Hailuo AI, Seedance, SkyReels V1, Mochi 1, CogVideoX, LTX Video, Open-Sora
+### 🎬 Video (31)
+Wan2.1, Wan2.2, Wan2.5, Hunyuan Video, Hunyuan Video 1.5, Runway Gen-3, Runway Gen-4.5, Kling AI, Kling 2.1, Kling 2.5, Kling Video O1, Pika Labs, Pika 2.1, Pika 2.2, Luma Dream Machine, Luma Ray2, Sora, Sora 2, Veo, Veo 3, Veo 3.1, Hailuo AI, Seedance, SkyReels V1, Mochi 1, CogVideoX, LTX Video, Open-Sora, MovieGen, Pyramid Flow, Allegro
 
-### 🖼️ Image (21)
-Stable Diffusion, SD 3.5, FLUX, FLUX 2, Midjourney, DALL-E 3, ComfyUI, Ideogram, Leonardo AI, Adobe Firefly, Recraft, Imagen 3, Imagen 4, GPT-4o Images, Reve Image, HiDream-I1, Qwen-Image, Recraft V3, FLUX Kontext, Ideogram 3, Grok Image
+### 🖼️ Image (31)
+Stable Diffusion, SD 3.5, Midjourney, Midjourney v7, FLUX, FLUX 2, FLUX 2 Max, FLUX Pro, FLUX Kontext, DALL-E 3, ComfyUI, Ideogram, Ideogram 3, Leonardo AI, Adobe Firefly, Adobe Firefly 3, Recraft, Recraft V3, Imagen 3, Imagen 4, GPT-4o Images, GPT Image 1.5, Reve Image, HiDream-I1, Qwen-Image, Grok Image, Hunyuan Image 3.0, Seedream 4.5, Gemini 3 Pro Image, Playground v3, Krea AI
 
 </td>
 <td width="50%">
 
-### 🔊 Audio (13)
-Suno AI, Udio, ElevenLabs, Eleven Music, Mureka AI, SOUNDRAW, Beatoven.ai, Stable Audio 2.0, MusicGen, Suno v4.5, ACE Studio, AIVA, Boomy
+### 🔊 Audio (18)
+Suno AI, Suno v4.5, Suno v5, Udio, Udio 2.0, ElevenLabs, Eleven Music, Mureka AI, SOUNDRAW, Beatoven.ai, Stable Audio 2.0, MusicGen, Google MusicFX, Riffusion, Bark, ACE Studio, AIVA, Boomy
 
-### 🧊 3D (12)
-Meshy, Tripo AI, Rodin, Spline, Sloyd, 3DFY.ai, Luma Genie, Masterpiece X, Hunyuan3D, Trellis, TripoSR, Unique3D
+### 🧊 3D (18)
+Meshy, Meshy 4, Tripo AI, Tripo 2.0, Rodin, Rodin Gen-2, Spline, Sloyd, 3DFY.ai, Luma Genie, Masterpiece X, Hunyuan3D, Trellis, TripoSR, Unique3D, SF3D, InstantMesh, CSM 3D
 
 ### ✍️ Creative (34)
-Story Writer, Code Generator, Technical Writer, Marketing Copy, SEO Content, Screenplay Writer, Social Media Manager, Video Script Writer, Song Lyrics, Email Copywriter, Product Description, Podcast Script, Resume Writer, Cover Letter, Speech Writer, Game Narrative, UX Writer, Press Release, Poetry Writer, Data Analysis, Business Plan, Academic Writing, Tutorial Creator, Newsletter Writer, Legal Document, Grant Writer, API Documentation, Course Creator, Pitch Deck, Meeting Notes, Changelog Writer, Recipe Creator, Travel Guide, Workout Plan
+Story Writer, Code Generator, Technical Writer, Marketing Copy, SEO Content, Screenplay Writer, Social Media, Podcast Script, UX Writer, Press Release, Poetry, Data Analysis, Business Plan, Academic Writer, Tutorial Writer, Newsletter, Legal Documents, Grant Writing, API Documentation, Course Content, Pitch Deck, Meeting Notes, Changelog, Recipe Writer, Travel Guide, Workout Plan, Resume/CV, Cover Letter, Product Description, Email Template, Speech Writer, FAQ Writer, Bio Writer, Testimonial
 
 </td>
 </tr>
