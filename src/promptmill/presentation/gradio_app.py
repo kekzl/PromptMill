@@ -23,34 +23,10 @@ from promptmill.presentation.theme import create_theme
 
 logger = logging.getLogger(__name__)
 
-# Custom CSS for improved dropdown contrast
+# Custom CSS for improved dropdown contrast.
+# Uses stable, role-based selectors instead of Gradio's build-specific hashed
+# Svelte class names (e.g. ``.svelte-xxxxxx``), which change between releases.
 CUSTOM_CSS = """
-/* Dropdown menu styling - dark background with high contrast text */
-.svelte-1gfkn6j {
-    background-color: #18181b !important;
-    border-color: #3f3f46 !important;
-}
-
-/* Dropdown options */
-.svelte-1gfkn6j ul {
-    background-color: #18181b !important;
-}
-
-.svelte-1gfkn6j li {
-    color: #fafafa !important;
-    background-color: #18181b !important;
-}
-
-.svelte-1gfkn6j li:hover {
-    background-color: #27272a !important;
-    color: #ffffff !important;
-}
-
-.svelte-1gfkn6j li[aria-selected="true"] {
-    background-color: #3f3f46 !important;
-    color: #ffffff !important;
-}
-
 /* Generic dropdown/listbox styling */
 [role="listbox"] {
     background-color: #18181b !important;
@@ -72,11 +48,6 @@ CUSTOM_CSS = """
 
 /* Input text color */
 input, textarea, select {
-    color: #fafafa !important;
-}
-
-/* Ensure dropdown text is visible */
-.wrap.svelte-1gfkn6j {
     color: #fafafa !important;
 }
 """
@@ -144,7 +115,9 @@ class GradioApp:
         else:
             gpu_status = "CPU mode (no GPU detected)"
 
-        with gr.Blocks(title="PromptMill", theme=create_theme(), css=CUSTOM_CSS) as app:
+        # In Gradio 6 the ``theme`` and ``css`` parameters moved off the Blocks
+        # constructor and are supplied at mount/launch time instead.
+        with gr.Blocks(title="PromptMill") as app:
             # Header
             gr.HTML(self._create_header_html(gpu_status))
 
@@ -186,7 +159,7 @@ class GradioApp:
                         label="Generated Prompt",
                         lines=10,
                         max_lines=20,
-                        show_copy_button=True,
+                        buttons=["copy"],
                         info="Copy this prompt to use with your AI model",
                     )
 
@@ -572,8 +545,15 @@ class GradioApp:
             status = self.health_service.get_status()
             return JSONResponse(content=dict(status))
 
-        # Mount Gradio app at root
-        fastapi_app = gr.mount_gradio_app(fastapi_app, self._app, path="/")
+        # Mount Gradio app at root. Theme and CSS are supplied here because
+        # Gradio 6 removed them from the Blocks constructor.
+        fastapi_app = gr.mount_gradio_app(
+            fastapi_app,
+            self._app,
+            path="/",
+            theme=create_theme(),
+            css=CUSTOM_CSS,
+        )
 
         return fastapi_app
 
