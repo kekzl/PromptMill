@@ -20,13 +20,13 @@ RUN pip install --no-cache-dir --upgrade pip
 
 # Install Python dependencies (CPU-only llama-cpp-python)
 RUN pip install --no-cache-dir \
-    "huggingface_hub>=0.20.0,<1.0.0" \
-    "gradio>=4.44.0,<5.0.0" \
-    "pytest>=7.0.0" \
-    "pytest-cov>=4.0.0"
+    "huggingface_hub>=1.0.0,<2.0.0" \
+    "gradio>=6.6.0,<7.0.0" \
+    "pytest>=8.4.0" \
+    "pytest-cov>=7.0.0"
 
 # Install llama-cpp-python without CUDA
-RUN pip install --no-cache-dir llama-cpp-python
+RUN pip install --no-cache-dir "llama-cpp-python>=0.3.0,<1.0.0"
 
 # Create non-root user for security
 RUN useradd -m -s /bin/bash -u 1000 promptmill

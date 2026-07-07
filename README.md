@@ -184,9 +184,11 @@ Response:
 ```json
 {
   "status": "healthy",
-  "version": "3.0.0",
+  "version": "3.2.0",
   "model_loaded": false,
-  "roles_count": 102
+  "model_path": null,
+  "roles_count": 132,
+  "disk_usage_bytes": 0
 }
 ```
 

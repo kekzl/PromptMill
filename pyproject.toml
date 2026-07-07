@@ -1,6 +1,6 @@
 [project]
 name = "promptmill"
-version = "3.1.0"
+version = "3.2.0"
 description = "AI-powered prompt generator for video, image, and creative content"
 readme = "README.md"
 license = { text = "MIT" }
@@ -31,17 +31,17 @@ classifiers = [
 ]
 
 dependencies = [
-    "gradio>=4.44.0,<5.0.0",
-    "huggingface_hub>=0.20.0,<1.0.0",
-    "llama-cpp-python>=0.2.0,<1.0.0",
+    "gradio>=6.6.0,<7.0.0",
+    "huggingface_hub>=1.0.0,<2.0.0",
+    "llama-cpp-python>=0.3.0,<1.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "ruff>=0.8.0",
-    "mypy>=1.13.0",
-    "pytest>=8.0.0",
-    "pytest-cov>=4.0.0",
+    "ruff>=0.14.0",
+    "mypy>=1.18.0",
+    "pytest>=8.4.0",
+    "pytest-cov>=7.0.0",
 ]
 
 [project.urls]
