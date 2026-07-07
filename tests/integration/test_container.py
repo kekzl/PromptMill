@@ -32,8 +32,8 @@ class TestContainerIntegration:
         assert container.llm is not None
 
     def test_role_repository_has_all_roles(self, container: Container) -> None:
-        """Test that all 102 roles are loaded."""
-        assert container.role_repository.count() == 102
+        """Test that all 132 roles are loaded."""
+        assert container.role_repository.count() == 132
 
     def test_role_repository_has_all_categories(self, container: Container) -> None:
         """Test that all categories have roles."""
@@ -49,10 +49,10 @@ class TestContainerIntegration:
         """Test role counts per category."""
         repo = container.role_repository
 
-        assert repo.count_by_category(RoleCategory.VIDEO) == 22
-        assert repo.count_by_category(RoleCategory.IMAGE) == 21
-        assert repo.count_by_category(RoleCategory.AUDIO) == 13
-        assert repo.count_by_category(RoleCategory.THREE_D) == 12
+        assert repo.count_by_category(RoleCategory.VIDEO) == 31
+        assert repo.count_by_category(RoleCategory.IMAGE) == 31
+        assert repo.count_by_category(RoleCategory.AUDIO) == 18
+        assert repo.count_by_category(RoleCategory.THREE_D) == 18
         assert repo.count_by_category(RoleCategory.CREATIVE) == 34
 
     def test_default_model_selection(self, container: Container) -> None:
@@ -86,7 +86,7 @@ class TestContainerIntegration:
         assert "status" in status
         assert status["status"] in ("healthy", "degraded")
         assert "roles_count" in status
-        assert status["roles_count"] == 102
+        assert status["roles_count"] == 132
 
     def test_container_shutdown(self, container: Container) -> None:
         """Test container shutdown doesn't raise."""
@@ -121,7 +121,7 @@ class TestRoleIntegration:
 
         # Get all display names
         display_names = repo.get_display_names()
-        assert len(display_names) == 102
+        assert len(display_names) == 132
 
         # Look up first role
         first_name = display_names[0]
