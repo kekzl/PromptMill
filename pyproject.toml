@@ -92,6 +92,7 @@ ignore = [
     "PLR0912", # too many branches
     "PLR0913", # too many arguments
     "PLR0915", # too many statements
+    "PLR0917", # too many positional arguments (Gradio wiring passes all UI components)
     "PLR2004", # magic value comparison
     "PLW0602", # global without assignment (used for read-only checks)
     "PLW0603", # global statement (valid pattern for singleton model)
