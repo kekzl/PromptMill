@@ -41,6 +41,13 @@ jobs:
             dockerfile: Dockerfile.cpu
           - variant: gpu
             dockerfile: Dockerfile.gpu
+    # Publishing a release also creates its tag, so the release event and the
+    # tag-push event both fire for the same commit and compute the same tags.
+    # Without this, two identical builds race to push them, and the GPU one
+    # takes ~25 minutes each.
+    concurrency:
+      group: publish-${{ github.ref }}-${{ matrix.variant }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
 
