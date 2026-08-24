@@ -92,6 +92,7 @@ def mock_llm() -> MagicMock:
     mock = MagicMock(spec=LLMPort)
     mock.is_loaded.return_value = False
     mock.get_loaded_model_path.return_value = None
+    mock.get_loaded_gpu_layers.return_value = None
 
     def generate_mock(*_args, **_kwargs):
         yield "Test "

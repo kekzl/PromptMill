@@ -27,23 +27,35 @@ class LoadModelUseCase:
     model_repository: ModelRepositoryPort
     lock: RLock
 
-    def execute(self, model: Model, models_dir: Path) -> None:
+    def execute(
+        self,
+        model: Model,
+        models_dir: Path,
+        n_gpu_layers_override: int | None = None,
+    ) -> None:
         """Execute the model loading use case.
 
         Args:
             model: The model configuration to load.
             models_dir: Directory where models are stored.
+            n_gpu_layers_override: GPU offload to use instead of the model's own
+                default. None keeps ``model.n_gpu_layers``.
 
         Raises:
             ModelDownloadError: If download fails.
             ModelLoadError: If loading fails.
         """
+        n_gpu_layers = (
+            model.n_gpu_layers if n_gpu_layers_override is None else n_gpu_layers_override
+        )
+
         with self.lock:
-            # Check if this model is already loaded
+            # Already loaded means same file AND same GPU split; a different
+            # split is a different runtime configuration and needs a reload.
             current_path = self.llm.get_loaded_model_path()
             expected_path = str(models_dir / model.filename)
 
-            if current_path == expected_path:
+            if current_path == expected_path and self.llm.get_loaded_gpu_layers() == n_gpu_layers:
                 logger.info(f"Model already loaded: {model.name}")
                 return
 
@@ -59,10 +71,11 @@ class LoadModelUseCase:
                 self.llm.unload()
 
             # Load the new model
-            logger.info(f"Loading model: {model.name}")
+            logger.info(f"Loading model: {model.name} (n_gpu_layers={n_gpu_layers})")
             self.llm.load(
                 model_path=str(model_path),
-                n_gpu_layers=model.n_gpu_layers,
+                n_gpu_layers=n_gpu_layers,
                 context_length=model.context_length,
+                chat_format=model.chat_format,
             )
             logger.info(f"Model loaded successfully: {model.name}")

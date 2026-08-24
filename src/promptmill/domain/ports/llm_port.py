@@ -55,11 +55,25 @@ class LLMPort(ABC):
         ...
 
     @abstractmethod
+    def get_loaded_gpu_layers(self) -> int | None:
+        """Get the GPU layer count the current model was loaded with.
+
+        Callers compare this against the requested offload to decide whether a
+        reload is needed: the same file loaded with a different split is a
+        different runtime configuration.
+
+        Returns:
+            Layer count if a model is loaded, None otherwise.
+        """
+        ...
+
+    @abstractmethod
     def load(
         self,
         model_path: str,
         n_gpu_layers: int,
         context_length: int,
+        chat_format: str | None = None,
     ) -> None:
         """Load a model for inference.
 
@@ -67,6 +81,7 @@ class LLMPort(ABC):
             model_path: Path to the model file.
             n_gpu_layers: Number of layers to offload to GPU (-1 for all).
             context_length: Maximum context window size.
+            chat_format: Chat template name, or None to use the adapter default.
 
         Raises:
             FileNotFoundError: If model file doesn't exist.
