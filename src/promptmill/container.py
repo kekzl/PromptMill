@@ -222,6 +222,7 @@ class Container:
             prompt_service=self.prompt_service,
             model_service=self.model_service,
             health_service=self.health_service,
+            role_repository=self.role_repository,
             assets_dir=assets_dir,
             gpu_info=self.detected_gpu,
             default_model=self.default_model,
