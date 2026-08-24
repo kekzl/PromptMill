@@ -1,8 +1,24 @@
+# Build context hygiene: only src/ and assets/ are copied into the images.
 __pycache__
 *.pyc
 *.pyo
 .git
 .gitignore
+.github
 venv
+.venv
 .env
+models
+tests
+htmlcov
+.coverage
+coverage.xml
+.pytest_cache
+.ruff_cache
+.mypy_cache
 README.md
+CONTRIBUTING.md
+CLAUDE.md
+SECURITY.md
+docker-compose*.yml
+start.sh

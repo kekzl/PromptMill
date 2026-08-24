@@ -1,25 +1,34 @@
 # PromptMill - AI Prompt Generator
 # https://github.com/kekzl/PromptMill
+#
+# Uses the prebuilt images from GHCR, so nothing is compiled locally.
+#
+#   ./start.sh                          auto-detects GPU, starts, prints the URL
+#   docker compose --profile gpu up -d  NVIDIA GPU
+#   docker compose --profile cpu up -d  CPU only
+#
+# To build from source instead, add the build overlay:
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml \
+#     --profile gpu up -d --build
 
 services:
   # GPU version - use with: docker compose --profile gpu up -d
   promptmill-gpu:
-    build:
-      context: .
-      dockerfile: Dockerfile.gpu
+    image: ghcr.io/kekzl/promptmill:gpu
     container_name: promptmill-gpu
     profiles: ["gpu"]
     ports:
-      - "7610:7610"
+      - "${PROMPTMILL_PORT:-7610}:7610"
     volumes:
-      - ./models:/app/models
-    environment:
-      - SERVER_HOST=0.0.0.0
-      - SERVER_PORT=7610
-      - MODELS_DIR=/app/models
+      - promptmill-models:/app/models
     env_file:
       - path: .env
         required: false
+    environment:
+      # The container always listens on 7610; PROMPTMILL_PORT only moves the
+      # published host port. Pinning this keeps a SERVER_PORT in .env from
+      # breaking the port mapping.
+      SERVER_PORT: 7610
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7610/health')"]
@@ -37,22 +46,21 @@ services:
 
   # CPU version - use with: docker compose --profile cpu up -d
   promptmill-cpu:
-    build:
-      context: .
-      dockerfile: Dockerfile.cpu
+    image: ghcr.io/kekzl/promptmill:cpu
     container_name: promptmill-cpu
     profiles: ["cpu"]
     ports:
-      - "7610:7610"
+      - "${PROMPTMILL_PORT:-7610}:7610"
     volumes:
-      - ./models:/app/models
-    environment:
-      - SERVER_HOST=0.0.0.0
-      - SERVER_PORT=7610
-      - MODELS_DIR=/app/models
+      - promptmill-models:/app/models
     env_file:
       - path: .env
         required: false
+    environment:
+      # The container always listens on 7610; PROMPTMILL_PORT only moves the
+      # published host port. Pinning this keeps a SERVER_PORT in .env from
+      # breaking the port mapping.
+      SERVER_PORT: 7610
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7610/health')"]
@@ -60,3 +68,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+
+volumes:
+  # Downloaded GGUF models. Survives container recreation; remove with
+  # `docker compose down -v`. To keep models in the working directory instead,
+  # replace the mount with `./models:/app/models`.
+  promptmill-models:
