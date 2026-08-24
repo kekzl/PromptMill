@@ -1,39 +1,35 @@
 # PromptMill - CPU Build
 # AI Prompt Generator with local LLM
 
-FROM python:3.14-slim-bookworm
+FROM python:3.14-slim-trixie
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    cmake \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
-# Upgrade pip
 RUN pip install --no-cache-dir --upgrade pip
 
-# Install Python dependencies (CPU-only llama-cpp-python)
 RUN pip install --no-cache-dir \
-    "huggingface_hub>=1.0.0,<2.0.0" \
-    "gradio>=6.6.0,<7.0.0" \
-    "pytest>=8.4.0" \
-    "pytest-cov>=7.0.0"
+    "huggingface_hub>=1.28.0,<2.0.0" \
+    "gradio>=6.25.0,<7.0.0"
 
-# Install llama-cpp-python without CUDA
-RUN pip install --no-cache-dir "llama-cpp-python>=0.3.0,<1.0.0"
+# llama-cpp-python from the project's own CPU wheel index.
+#
+# Do not fall back to a PyPI source build: llama-cpp-python 0.3.35 links its
+# ggml/llama shared objects without libstdc++, so the resulting libraries fail
+# to dlopen with "undefined symbol: _ZTVN10__cxxabiv117__class_type_infoE".
+# The published manylinux wheels are linked correctly. --only-binary keeps a
+# missing wheel a loud build failure rather than a silently broken image.
+RUN pip install --no-cache-dir --only-binary llama-cpp-python \
+    --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu \
+    "llama-cpp-python>=0.3.35,<1.0.0"
 
 # Create non-root user for security
 RUN useradd -m -s /bin/bash -u 1000 promptmill
 
 COPY --chown=promptmill:promptmill src/ ./src/
 COPY --chown=promptmill:promptmill assets/ ./assets/
-COPY --chown=promptmill:promptmill tests/ ./tests/
 
 # Create models directory and set ownership of entire app directory
 RUN mkdir -p /app/models && chown -R promptmill:promptmill /app
@@ -41,12 +37,19 @@ ENV MODELS_DIR=/app/models
 ENV HF_HOME=/app/models/.cache
 ENV PYTHONPATH=/app/src
 
+# Bind to all interfaces: a container port is only reachable via -p anyway.
+ENV SERVER_HOST=0.0.0.0
+ENV SERVER_PORT=7610
+
+# Model cache survives container recreation.
+VOLUME ["/app/models"]
+
 # Switch to non-root user
 USER promptmill
 
 EXPOSE 7610
 
-# Health check using /health endpoint
+# Health check using the /health endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7610/health')" || exit 1
 

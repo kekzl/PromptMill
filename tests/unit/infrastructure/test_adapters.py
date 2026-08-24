@@ -6,11 +6,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from promptmill.domain.entities.model import Model
-from promptmill.domain.exceptions import ModelNotLoadedError
+from promptmill.domain.exceptions import ModelDownloadError, ModelNotLoadedError
 from promptmill.infrastructure.adapters.gpu_detector_adapter import NvidiaSmiAdapter
 from promptmill.infrastructure.adapters.huggingface_adapter import HuggingFaceAdapter
 from promptmill.infrastructure.adapters.llama_cpp_adapter import LlamaCppAdapter
 from promptmill.infrastructure.adapters.role_repository_adapter import RoleRepositoryAdapter
+from promptmill.infrastructure.persistence.roles_data import ROLES_DATA
 
 
 class TestLlamaCppAdapter:
@@ -199,6 +200,81 @@ class TestNvidiaSmiAdapter:
             assert adapter.is_cuda_available() is False
 
 
+class TestHuggingFaceDownload:
+    """Tests for the download path.
+
+    These patch with ``autospec=True`` on purpose: the mock then enforces the
+    real ``hf_hub_download`` signature, so a kwarg that upstream removed fails
+    here instead of at a user's first model download.
+    """
+
+    def test_download_matches_upstream_signature(self, tmp_path: Path) -> None:
+        """The call binds against the installed huggingface_hub."""
+        model = Model(
+            key="test",
+            name="Test",
+            repo_id="test/repo",
+            filename="test.gguf",
+            context_length=4096,
+            n_gpu_layers=-1,
+            description="Test",
+            vram_required="~1GB",
+            revision="main",
+        )
+        adapter = HuggingFaceAdapter(tmp_path)
+
+        with patch("huggingface_hub.hf_hub_download", autospec=True) as download:
+            download.return_value = str(tmp_path / model.filename)
+            result = adapter.download_model(model)
+
+        assert result == tmp_path / model.filename
+        download.assert_called_once()
+        assert download.call_args.kwargs["repo_id"] == "test/repo"
+        assert download.call_args.kwargs["local_dir"] == tmp_path
+
+    def test_download_reports_progress(self, tmp_path: Path) -> None:
+        """A progress callback is driven to completion."""
+        model = Model(
+            key="test",
+            name="Test",
+            repo_id="test/repo",
+            filename="test.gguf",
+            context_length=4096,
+            n_gpu_layers=-1,
+            description="Test",
+            vram_required="~1GB",
+        )
+        adapter = HuggingFaceAdapter(tmp_path)
+        seen: list[float] = []
+
+        with patch("huggingface_hub.hf_hub_download", autospec=True) as download:
+            download.return_value = str(tmp_path / model.filename)
+            adapter.download_model(model, progress_callback=seen.append)
+
+        assert seen == [1.0]
+
+    def test_download_failure_is_wrapped(self, tmp_path: Path) -> None:
+        """Transport errors surface as ModelDownloadError."""
+        model = Model(
+            key="test",
+            name="Test",
+            repo_id="test/repo",
+            filename="test.gguf",
+            context_length=4096,
+            n_gpu_layers=-1,
+            description="Test",
+            vram_required="~1GB",
+        )
+        adapter = HuggingFaceAdapter(tmp_path)
+
+        with (
+            patch("huggingface_hub.hf_hub_download", autospec=True) as download,
+            pytest.raises(ModelDownloadError),
+        ):
+            download.side_effect = OSError("network down")
+            adapter.download_model(model)
+
+
 class TestRoleRepositoryAdapter:
     """Tests for RoleRepositoryAdapter."""
 
@@ -252,8 +328,8 @@ class TestRoleRepositoryAdapter:
         adapter = RoleRepositoryAdapter()
         count = adapter.count()
 
-        # Should have 132 roles based on documentation (v3.1.0)
-        assert count == 132
+        # Count follows the data set, not a copied-in literal.
+        assert count == len(ROLES_DATA)
 
     def test_get_categories(self) -> None:
         """Test getting available categories."""
