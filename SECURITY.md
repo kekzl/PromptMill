@@ -4,8 +4,8 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 2.3.x   | :white_check_mark: |
-| < 2.3   | :x:                |
+| 3.3.x   | :white_check_mark: |
+| < 3.3   | :x:                |
 
 ## Security Considerations
 
@@ -22,9 +22,18 @@ By default, PromptMill binds to `127.0.0.1` (localhost only) for security. This 
 ### Container Security
 
 The Docker images:
-- Run as non-root user (`promptmill`)
+- Run as non-root user (`promptmill`, UID 1000)
 - Have health checks enabled
-- Use pinned base images for reproducibility
+- Bind `0.0.0.0` inside the container only; the port is reachable solely through
+  an explicit `-p` mapping
+- Pin the CUDA base image to a patch version; the CPU base tracks
+  `python:3.14-slim-trixie`
+
+### HTTP API
+
+`/api/generate` and `/api/generate/stream` are **unauthenticated**. Anyone who can
+reach the port can trigger inference and, on first use, a model download. Treat the
+port as trusted-network only, or put authentication in the reverse proxy.
 
 ### Model Downloads
 
@@ -35,11 +44,11 @@ Models are downloaded from Hugging Face Hub:
 
 ### Input Validation
 
-The application includes:
-- Prompt length limits (10,000 characters)
-- Temperature clamping (0.1-2.0)
-- Token limits (100-2000)
-- GPU layer validation (0-100)
+Both the UI and the REST API validate through the same domain value object:
+- Prompt length limit (10,000 characters)
+- Temperature range (0.1-2.0)
+- Token limit (100-2000)
+- Unknown targets and models are rejected with 404 before any model is loaded
 
 ## Reporting a Vulnerability
 
@@ -61,6 +70,7 @@ When deploying PromptMill:
 
 1. **Use a reverse proxy** for production deployments
 2. **Enable HTTPS** via your reverse proxy
-3. **Keep Docker images updated** for security patches
-4. **Limit network access** to trusted users
-5. **Monitor resource usage** to prevent DoS
+3. **Add authentication at the proxy**: the API has none of its own
+4. **Keep Docker images updated** for security patches
+5. **Limit network access** to trusted users
+6. **Monitor resource usage**: generation is CPU/GPU bound and unthrottled
