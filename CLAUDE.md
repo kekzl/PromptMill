@@ -87,6 +87,23 @@ no framework. Adding a dependency means adding a property there and nothing else
   lazily and loaded through ctypes, so the container starts healthy and only fails on the
   first prompt. CI imports it explicitly for that reason.
 
+## Release and images
+
+`ghcr.io/kekzl/promptmill:{cpu,gpu}` are published by `.github/workflows/publish.yml`.
+
+A merge to `master` does **not** publish. The auto-merge workflow enables auto-merge with
+`GITHUB_TOKEN`, and a merge performed that way triggers no further workflow runs, so the
+`push: branches: [master]` trigger never fires for merged PRs. To publish:
+
+- publish a GitHub release, or push a `v*` tag with your own credentials: also tags
+  `:X.Y.Z-cpu` and `:X.Y-cpu`
+- or `gh workflow run publish.yml --ref master`: refreshes `:cpu` and `:gpu` only
+
+Branch protection on `master` requires the status check contexts `Code Quality`, `Tests`
+and `Docker Build`, matched by job **name**. The test matrix reports one context per Python
+version, so an aggregator job carries the literal name `Tests`. Renaming a CI job without
+updating protection blocks every PR indefinitely.
+
 ## Conventions
 
 - Python 3.13+ features are used deliberately (`@override`, `StrEnum`, `type` aliases,

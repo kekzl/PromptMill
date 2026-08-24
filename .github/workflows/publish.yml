@@ -9,10 +9,17 @@ name: Publish images
 #   ghcr.io/kekzl/promptmill:X.Y.Z-cpu  release build (git tag vX.Y.Z)
 #   ghcr.io/kekzl/promptmill:X.Y.Z-gpu  release build (git tag vX.Y.Z)
 
+# Note on triggers: the auto-merge workflow enables auto-merge with
+# GITHUB_TOKEN, and a merge performed that way does NOT trigger further
+# workflow runs. A plain merge to master therefore never publishes on its own.
+# Publishing a GitHub release, or pushing a v* tag with your own credentials,
+# does trigger this; workflow_dispatch covers everything else.
 on:
   push:
     branches: [master]
     tags: ["v*"]
+  release:
+    types: [published]
   workflow_dispatch:
 
 env:
@@ -47,10 +54,10 @@ jobs:
           df -h /
 
       - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -63,18 +70,24 @@ jobs:
           BASE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           VARIANT: ${{ matrix.variant }}
           REF: ${{ github.ref }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           BASE="${BASE,,}"
           TAGS="${BASE}:${VARIANT}"
+          VERSION=""
           if [[ "$REF" == refs/tags/v* ]]; then
             VERSION="${REF#refs/tags/v}"
+          elif [[ "$RELEASE_TAG" == v* ]]; then
+            VERSION="${RELEASE_TAG#v}"
+          fi
+          if [[ -n "$VERSION" ]]; then
             TAGS="${TAGS},${BASE}:${VERSION}-${VARIANT},${BASE}:${VERSION%.*}-${VARIANT}"
           fi
           echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
           echo "Publishing: ${TAGS}"
 
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.dockerfile }}
