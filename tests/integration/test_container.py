@@ -1,5 +1,7 @@
 """Integration tests for the DI container and full system initialization."""
 
+from collections import Counter
+
 import pytest
 
 # Skip all tests if gradio is not installed
@@ -8,6 +10,7 @@ pytest.importorskip("gradio")
 from promptmill.container import Container
 from promptmill.domain.entities.role import RoleCategory
 from promptmill.infrastructure.config.settings import Settings
+from promptmill.infrastructure.persistence.roles_data import ROLES_DATA
 
 
 class TestContainerIntegration:
@@ -32,8 +35,8 @@ class TestContainerIntegration:
         assert container.llm is not None
 
     def test_role_repository_has_all_roles(self, container: Container) -> None:
-        """Test that all 132 roles are loaded."""
-        assert container.role_repository.count() == 132
+        """Test that every role in the data set is loaded."""
+        assert container.role_repository.count() == len(ROLES_DATA)
 
     def test_role_repository_has_all_categories(self, container: Container) -> None:
         """Test that all categories have roles."""
@@ -49,11 +52,10 @@ class TestContainerIntegration:
         """Test role counts per category."""
         repo = container.role_repository
 
-        assert repo.count_by_category(RoleCategory.VIDEO) == 31
-        assert repo.count_by_category(RoleCategory.IMAGE) == 31
-        assert repo.count_by_category(RoleCategory.AUDIO) == 18
-        assert repo.count_by_category(RoleCategory.THREE_D) == 18
-        assert repo.count_by_category(RoleCategory.CREATIVE) == 34
+        expected = Counter(data["category"] for data in ROLES_DATA.values())
+        for category in RoleCategory:
+            assert repo.count_by_category(category) == expected[category.value]
+        assert sum(expected.values()) == repo.count()
 
     def test_default_model_selection(self, container: Container) -> None:
         """Test that default model is selected based on GPU."""
@@ -86,7 +88,7 @@ class TestContainerIntegration:
         assert "status" in status
         assert status["status"] in ("healthy", "degraded")
         assert "roles_count" in status
-        assert status["roles_count"] == 132
+        assert status["roles_count"] == len(ROLES_DATA)
 
     def test_container_shutdown(self, container: Container) -> None:
         """Test container shutdown doesn't raise."""
@@ -121,7 +123,7 @@ class TestRoleIntegration:
 
         # Get all display names
         display_names = repo.get_display_names()
-        assert len(display_names) == 132
+        assert len(display_names) == len(ROLES_DATA)
 
         # Look up first role
         first_name = display_names[0]

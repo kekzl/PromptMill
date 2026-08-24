@@ -19,8 +19,12 @@ class Model:
         context_length: Maximum context window size.
         n_gpu_layers: Number of layers to offload to GPU (-1 for all).
         description: Human-readable description of the model.
-        vram_required: Approximate VRAM requirement string.
+        vram_required: Approximate VRAM requirement string, weights plus KV cache
+            at the configured context length.
         revision: Git revision (commit hash) for reproducible downloads.
+        chat_format: llama.cpp chat template name for this model's base
+            architecture. Wrong values silently produce garbage output, so it
+            belongs to the model, not to the runtime.
     """
 
     key: str
@@ -32,6 +36,7 @@ class Model:
     description: str
     vram_required: str
     revision: str | None = None
+    chat_format: str = "llama-3"
 
     def get_local_path(self, models_dir: Path) -> Path:
         """Get the expected local file path for this model.

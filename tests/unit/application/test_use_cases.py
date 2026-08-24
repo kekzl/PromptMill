@@ -128,6 +128,7 @@ class TestLoadModelUseCase:
         """Test loading already loaded model is a no-op."""
         model_path = str(tmp_path / sample_model.filename)
         mock_llm.get_loaded_model_path.return_value = model_path
+        mock_llm.get_loaded_gpu_layers.return_value = sample_model.n_gpu_layers
 
         use_case = LoadModelUseCase(
             llm=mock_llm,
@@ -138,6 +139,83 @@ class TestLoadModelUseCase:
         use_case.execute(sample_model, tmp_path)
 
         mock_llm.load.assert_not_called()
+
+    def test_load_model_reloads_when_gpu_layers_change(
+        self,
+        mock_llm: MagicMock,
+        mock_model_repository: MagicMock,
+        sample_model: Model,
+        tmp_path: Path,
+        model_lock: RLock,
+    ) -> None:
+        """Same file with a different GPU split is a different configuration."""
+        model_path = str(tmp_path / sample_model.filename)
+        mock_llm.get_loaded_model_path.return_value = model_path
+        mock_llm.get_loaded_gpu_layers.return_value = sample_model.n_gpu_layers
+        mock_model_repository.get_model_path.return_value = Path(model_path)
+
+        use_case = LoadModelUseCase(
+            llm=mock_llm,
+            model_repository=mock_model_repository,
+            lock=model_lock,
+        )
+
+        use_case.execute(sample_model, tmp_path, n_gpu_layers_override=12)
+
+        mock_llm.load.assert_called_once()
+        assert mock_llm.load.call_args.kwargs["n_gpu_layers"] == 12
+
+    def test_load_model_passes_chat_format(
+        self,
+        mock_llm: MagicMock,
+        mock_model_repository: MagicMock,
+        tmp_path: Path,
+        model_lock: RLock,
+    ) -> None:
+        """The model's own chat format reaches the adapter."""
+        model = Model(
+            key="qwen_tier",
+            name="Qwen Tier",
+            repo_id="test/qwen-gguf",
+            filename="qwen.gguf",
+            context_length=4096,
+            n_gpu_layers=-1,
+            description="Test model with a non-default template",
+            vram_required="~4GB",
+            chat_format="chatml",
+        )
+        mock_model_repository.get_model_path.return_value = tmp_path / model.filename
+
+        use_case = LoadModelUseCase(
+            llm=mock_llm,
+            model_repository=mock_model_repository,
+            lock=model_lock,
+        )
+
+        use_case.execute(model, tmp_path)
+
+        assert mock_llm.load.call_args.kwargs["chat_format"] == "chatml"
+
+    def test_load_model_override_none_keeps_model_default(
+        self,
+        mock_llm: MagicMock,
+        mock_model_repository: MagicMock,
+        sample_model: Model,
+        tmp_path: Path,
+        model_lock: RLock,
+    ) -> None:
+        """Passing no override uses the model's own GPU layer count."""
+        mock_model_repository.get_model_path.return_value = tmp_path / sample_model.filename
+
+        use_case = LoadModelUseCase(
+            llm=mock_llm,
+            model_repository=mock_model_repository,
+            lock=model_lock,
+        )
+
+        use_case.execute(sample_model, tmp_path)
+
+        assert mock_llm.load.call_args.kwargs["n_gpu_layers"] == sample_model.n_gpu_layers
 
     def test_load_model_unloads_previous(
         self,

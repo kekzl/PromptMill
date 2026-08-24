@@ -13,7 +13,7 @@ from promptmill import __version__
 from promptmill.container import Container
 from promptmill.infrastructure.config.settings import Settings
 
-# Configure logging
+# Configure logging. The level is refined from settings once they are loaded.
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -26,6 +26,12 @@ def main() -> None:
     """Main entry point for PromptMill."""
     # Load settings
     settings = Settings.from_environment()
+
+    # An unknown LOG_LEVEL must not take the app down; fall back to INFO.
+    if isinstance(logging.getLevelName(settings.log_level), int):
+        logging.getLogger().setLevel(settings.log_level)
+    else:
+        logger.warning("Unknown LOG_LEVEL %r, staying at INFO", settings.log_level)
 
     # Create container
     container = Container(settings=settings)

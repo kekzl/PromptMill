@@ -73,13 +73,15 @@ class ModelService:
         """
         return self.select_model_use_case.execute()
 
-    def load_model(self, model: Model) -> None:
+    def load_model(self, model: Model, n_gpu_layers_override: int | None = None) -> None:
         """Load a model.
 
         Args:
             model: Model to load.
+            n_gpu_layers_override: GPU offload to use instead of the model's own
+                default. None keeps ``model.n_gpu_layers``.
         """
-        self.load_model_use_case.execute(model, self.models_dir)
+        self.load_model_use_case.execute(model, self.models_dir, n_gpu_layers_override)
 
     def unload_model(self) -> bool:
         """Unload current model.

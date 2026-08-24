@@ -10,7 +10,6 @@ from typing import Any
 import gradio as gr
 import uvicorn
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
 
 from promptmill import __version__
 from promptmill.application.services.health_service import HealthService
@@ -18,10 +17,22 @@ from promptmill.application.services.model_service import ModelService
 from promptmill.application.services.prompt_service import PromptService
 from promptmill.domain.entities.gpu_info import GPUInfo
 from promptmill.domain.entities.model import Model
+from promptmill.domain.entities.role import RoleCategory
+from promptmill.domain.ports.role_repository_port import RoleRepositoryPort
 from promptmill.domain.value_objects.prompt_request import PromptGenerationRequest
+from promptmill.domain.value_objects.prompt_result import PromptGenerationResult
+from promptmill.presentation import history as hist
+from promptmill.presentation.api import create_api_router
+from promptmill.presentation.examples import examples_for
 from promptmill.presentation.theme import create_theme
 
 logger = logging.getLogger(__name__)
+
+# Sentinel for the category filter's "no filter" option.
+ALL_CATEGORIES = "All"
+
+# Number of example buttons rendered, split across two rows.
+EXAMPLE_BUTTON_COUNT = 6
 
 # Custom CSS for improved dropdown contrast.
 # Uses stable, role-based selectors instead of Gradio's build-specific hashed
@@ -52,34 +63,6 @@ input, textarea, select {
 }
 """
 
-# Example prompts for quick start
-EXAMPLE_PROMPTS = [
-    (
-        "Samurai in Cherry Blossoms",
-        "A lone samurai walking slowly through a path of falling cherry blossoms at golden hour sunset, katana at his side, petals swirling in the gentle breeze",
-    ),
-    (
-        "Timelapse Flower Bloom",
-        "Macro timelapse of a delicate flower bud slowly opening and blooming in a sunlit garden, dewdrops glistening on petals, soft bokeh background",
-    ),
-    (
-        "Ocean Waves Aerial",
-        "Cinematic aerial drone shot of powerful turquoise ocean waves crashing against dramatic rocky cliffs, white foam spray, golden hour lighting",
-    ),
-    (
-        "Cyberpunk Portrait",
-        "Close-up portrait of a cyberpunk warrior with glowing neon tattoos, rain-soaked face, reflections of holographic billboards, moody night scene",
-    ),
-    (
-        "Cozy Cabin Snow",
-        "Cozy wooden cabin nestled in snowy mountains at twilight, warm light glowing from windows, smoke rising from chimney, fresh snowfall",
-    ),
-    (
-        "Astronaut on Mars",
-        "An astronaut in a detailed spacesuit walking across the rusty red Martian surface, Earth visible in the distant sky, dramatic shadows",
-    ),
-]
-
 
 @dataclass
 class GradioApp:
@@ -92,11 +75,16 @@ class GradioApp:
     prompt_service: PromptService
     model_service: ModelService
     health_service: HealthService
+    role_repository: RoleRepositoryPort
     assets_dir: Path
     gpu_info: GPUInfo | None
     default_model: Model
 
     _app: gr.Blocks | None = None
+
+    # =========================================================================
+    # UI construction
+    # =========================================================================
 
     def create(self) -> gr.Blocks:
         """Create and configure the Gradio Blocks application.
@@ -104,36 +92,46 @@ class GradioApp:
         Returns:
             Configured Gradio Blocks instance.
         """
-        role_choices = (
-            self.prompt_service.generate_prompt_use_case.role_repository.get_display_names()
-        )
+        category_choices = [
+            ALL_CATEGORIES,
+            *(c.value for c in self.role_repository.get_categories()),
+        ]
+        role_choices = self.role_repository.get_display_names()
         model_choices = self.model_service.get_model_names()
 
-        # Build GPU status string
-        if self.gpu_info and self.gpu_info.is_available:
-            gpu_status = f"{self.gpu_info.name} ({self.gpu_info.vram_gb:.0f}GB VRAM)"
-        else:
-            gpu_status = "CPU mode (no GPU detected)"
+        initial_role = role_choices[0] if role_choices else ""
+        initial_examples = self._examples_for_role(initial_role)
+
+        gpu_status = self._gpu_status_text()
 
         # In Gradio 6 the ``theme`` and ``css`` parameters moved off the Blocks
         # constructor and are supplied at mount/launch time instead.
         with gr.Blocks(title="PromptMill") as app:
-            # Header
+            # Session state: examples for the active target, and the prompt
+            # history. Both are per-browser-session, never server-global.
+            examples_state = gr.State([text for _, text in initial_examples])
+            history_state: gr.State = gr.State([])
+
             gr.HTML(self._create_header_html(gpu_status))
 
             with gr.Row():
                 # Left column - main interaction
                 with gr.Column(scale=2):
+                    category_filter = gr.Radio(
+                        label="Category",
+                        choices=category_choices,
+                        value=ALL_CATEGORIES,
+                        info=f"{self.role_repository.count()} targets available",
+                    )
+
                     role_dropdown = gr.Dropdown(
                         label="Target AI Model",
                         choices=role_choices,
-                        value=role_choices[0] if role_choices else None,
-                        info="Select the AI model you're generating prompts for",
+                        value=initial_role or None,
+                        info="Type to search, or narrow the list with the category filter",
                     )
 
-                    role_info = gr.Markdown(
-                        value=self._get_role_info(role_choices[0]) if role_choices else ""
-                    )
+                    role_info = gr.Markdown(value=self._get_role_info(initial_role))
 
                     user_idea = gr.Textbox(
                         label="Your Idea / Request",
@@ -142,15 +140,17 @@ class GradioApp:
                         max_lines=10,
                     )
 
-                    # Example buttons
+                    # Example buttons; labels follow the selected category.
                     gr.Markdown("**Quick Examples:**")
+                    example_buttons: list[gr.Button] = []
                     with gr.Row():
-                        ex_btns_row1 = [
-                            gr.Button(EXAMPLE_PROMPTS[i][0], size="sm") for i in range(3)
+                        example_buttons += [
+                            gr.Button(initial_examples[i][0], size="sm") for i in range(3)
                         ]
                     with gr.Row():
-                        ex_btns_row2 = [
-                            gr.Button(EXAMPLE_PROMPTS[i][0], size="sm") for i in range(3, 6)
+                        example_buttons += [
+                            gr.Button(initial_examples[i][0], size="sm")
+                            for i in range(3, EXAMPLE_BUTTON_COUNT)
                         ]
 
                     generate_btn = gr.Button("Generate Prompt", variant="primary", size="lg")
@@ -163,14 +163,21 @@ class GradioApp:
                         info="Copy this prompt to use with your AI model",
                     )
 
+                    output_stats = gr.Markdown(value="")
+
+                    with gr.Accordion("History (this session)", open=False):
+                        history_dropdown = gr.Dropdown(
+                            label="Previous generations",
+                            choices=[],
+                            interactive=True,
+                        )
+                        with gr.Row():
+                            restore_btn = gr.Button("Restore", size="sm")
+                            clear_history_btn = gr.Button("Clear", size="sm", variant="stop")
+
                 # Right column - settings
                 with gr.Column(scale=1):
-                    if self.gpu_info and self.gpu_info.is_available:
-                        gr.Markdown(
-                            f"### LLM for Prompt Generation\n*Auto-detected: {self.gpu_info.vram_gb:.0f}GB VRAM*"
-                        )
-                    else:
-                        gr.Markdown("### LLM for Prompt Generation\n*No GPU detected - using CPU*")
+                    gr.Markdown(f"### LLM for Prompt Generation\n*{gpu_status}*")
 
                     model_dropdown = gr.Dropdown(
                         label="Select by Your GPU VRAM",
@@ -211,7 +218,7 @@ class GradioApp:
                         maximum=100,
                         value=self.default_model.n_gpu_layers,
                         step=1,
-                        info="-1 = all layers on GPU, 0 = CPU only",
+                        info="-1 = all layers on GPU, 0 = CPU only. Changing this reloads the model.",
                     )
 
                     # Model Management
@@ -242,12 +249,10 @@ class GradioApp:
                         """
                     )
 
-            # Footer
             gr.HTML(self._create_footer_html())
 
-            # Event handlers
             self._setup_event_handlers(
-                app,
+                category_filter=category_filter,
                 role_dropdown=role_dropdown,
                 role_info=role_info,
                 model_dropdown=model_dropdown,
@@ -255,11 +260,16 @@ class GradioApp:
                 user_idea=user_idea,
                 generate_btn=generate_btn,
                 output=output,
+                output_stats=output_stats,
                 temperature=temperature,
                 max_tokens=max_tokens,
                 n_gpu_layers=n_gpu_layers,
-                ex_btns_row1=ex_btns_row1,
-                ex_btns_row2=ex_btns_row2,
+                example_buttons=example_buttons,
+                examples_state=examples_state,
+                history_state=history_state,
+                history_dropdown=history_dropdown,
+                restore_btn=restore_btn,
+                clear_history_btn=clear_history_btn,
                 refresh_models_btn=refresh_models_btn,
                 delete_all_btn=delete_all_btn,
                 model_to_delete=model_to_delete,
@@ -273,7 +283,7 @@ class GradioApp:
 
     def _setup_event_handlers(
         self,
-        _app: gr.Blocks,
+        category_filter: gr.Radio,
         role_dropdown: gr.Dropdown,
         role_info: gr.Markdown,
         model_dropdown: gr.Dropdown,
@@ -281,11 +291,16 @@ class GradioApp:
         user_idea: gr.Textbox,
         generate_btn: gr.Button,
         output: gr.Textbox,
+        output_stats: gr.Markdown,
         temperature: gr.Slider,
         max_tokens: gr.Slider,
         n_gpu_layers: gr.Slider,
-        ex_btns_row1: list[gr.Button],
-        ex_btns_row2: list[gr.Button],
+        example_buttons: list[gr.Button],
+        examples_state: gr.State,
+        history_state: gr.State,
+        history_dropdown: gr.Dropdown,
+        restore_btn: gr.Button,
+        clear_history_btn: gr.Button,
         refresh_models_btn: gr.Button,
         delete_all_btn: gr.Button,
         model_to_delete: gr.Dropdown,
@@ -295,52 +310,65 @@ class GradioApp:
     ) -> None:
         """Set up all event handlers for the UI."""
 
-        # Role info update
+        # Category filter narrows the target list and re-seeds the examples.
+        category_filter.change(
+            fn=self._on_category_change,
+            inputs=[category_filter],
+            outputs=[role_dropdown, role_info, examples_state, *example_buttons],
+        )
+
+        # Target change refreshes the description and the example set.
         role_dropdown.change(
-            fn=self._get_role_info,
+            fn=self._on_role_change,
             inputs=[role_dropdown],
-            outputs=[role_info],
+            outputs=[role_info, examples_state, *example_buttons],
         )
 
-        # Model info update
+        # Model change refreshes the description and the GPU layer default.
         model_dropdown.change(
-            fn=self._get_model_info,
+            fn=self._on_model_change,
             inputs=[model_dropdown],
-            outputs=[model_info],
+            outputs=[model_info, n_gpu_layers],
         )
 
-        # Example buttons
-        for i, btn in enumerate(ex_btns_row1):
-            btn.click(fn=lambda p=EXAMPLE_PROMPTS[i][1]: p, outputs=user_idea)
-        for i, btn in enumerate(ex_btns_row2):
-            btn.click(fn=lambda p=EXAMPLE_PROMPTS[i + 3][1]: p, outputs=user_idea)
+        # Example buttons read their text from session state, so the same
+        # button serves whatever category is currently selected.
+        for index, button in enumerate(example_buttons):
+            button.click(
+                fn=lambda texts, i=index: self._example_text(texts, i),
+                inputs=[examples_state],
+                outputs=user_idea,
+            )
 
-        # Generate button
-        generate_btn.click(
-            fn=self._generate_prompt,
-            inputs=[
-                user_idea,
-                role_dropdown,
-                model_dropdown,
-                temperature,
-                max_tokens,
-                n_gpu_layers,
-            ],
-            outputs=output,
+        generation_inputs = [
+            user_idea,
+            role_dropdown,
+            model_dropdown,
+            temperature,
+            max_tokens,
+            n_gpu_layers,
+        ]
+
+        for trigger in (generate_btn.click, user_idea.submit):
+            trigger(
+                fn=self._generate_prompt,
+                inputs=generation_inputs,
+                outputs=output,
+            ).then(
+                fn=self._record_generation,
+                inputs=[history_state, user_idea, role_dropdown, model_dropdown, output],
+                outputs=[history_state, history_dropdown, output_stats],
+            )
+
+        restore_btn.click(
+            fn=self._restore_history,
+            inputs=[history_state, history_dropdown],
+            outputs=[user_idea, role_dropdown, output, output_stats],
         )
 
-        # Submit on enter
-        user_idea.submit(
-            fn=self._generate_prompt,
-            inputs=[
-                user_idea,
-                role_dropdown,
-                model_dropdown,
-                temperature,
-                max_tokens,
-                n_gpu_layers,
-            ],
-            outputs=output,
+        clear_history_btn.click(
+            fn=self._clear_history,
+            outputs=[history_state, history_dropdown],
         )
 
         # Model management
@@ -366,6 +394,113 @@ class GradioApp:
             outputs=[models_status, model_to_delete, delete_one_btn, cleanup_result],
         )
 
+    # =========================================================================
+    # Target selection
+    # =========================================================================
+
+    def _role_choices_for(self, category_label: str) -> list[str]:
+        """List target display names for a category label.
+
+        Args:
+            category_label: A category value or ``ALL_CATEGORIES``.
+
+        Returns:
+            Display names of matching targets.
+        """
+        if category_label == ALL_CATEGORIES:
+            return self.role_repository.get_display_names()
+
+        category = RoleCategory.from_string(category_label)
+        return [role.display_name for role in self.role_repository.get_by_category(category)]
+
+    def _examples_for_role(self, role_display_name: str) -> tuple[tuple[str, str], ...]:
+        """Get the example set matching a target's category.
+
+        Args:
+            role_display_name: Target display name.
+
+        Returns:
+            Six (label, prompt) pairs.
+        """
+        role = self.role_repository.get_by_display_name(role_display_name)
+        category = role.category if role else RoleCategory.CREATIVE
+        return examples_for(category)
+
+    def _example_updates(self, role_display_name: str) -> tuple[Any, ...]:
+        """Build the state and button updates for a target's examples.
+
+        Args:
+            role_display_name: Target display name.
+
+        Returns:
+            Tuple of (example texts, six button updates).
+        """
+        examples = self._examples_for_role(role_display_name)
+        texts = [text for _, text in examples]
+        buttons = tuple(gr.update(value=label) for label, _ in examples)
+        return (texts, *buttons)
+
+    def _on_category_change(self, category_label: str) -> tuple[Any, ...]:
+        """Filter the target list and re-seed the examples.
+
+        Args:
+            category_label: Selected category label.
+
+        Returns:
+            Tuple of (dropdown update, role info, example texts, button updates).
+        """
+        choices = self._role_choices_for(category_label)
+        selected = choices[0] if choices else ""
+        return (
+            gr.update(choices=choices, value=selected or None),
+            self._get_role_info(selected),
+            *self._example_updates(selected),
+        )
+
+    def _on_role_change(self, role_display_name: str) -> tuple[Any, ...]:
+        """Refresh the description and examples for the selected target.
+
+        Args:
+            role_display_name: Selected target display name.
+
+        Returns:
+            Tuple of (role info, example texts, button updates).
+        """
+        return (self._get_role_info(role_display_name), *self._example_updates(role_display_name))
+
+    def _on_model_change(self, model_name: str) -> tuple[str, Any]:
+        """Refresh model description and reset the GPU layer slider.
+
+        Args:
+            model_name: Selected model display name.
+
+        Returns:
+            Tuple of (model info markdown, GPU layer slider update).
+        """
+        model = self.model_service.get_model_by_name(model_name)
+        if model is None:
+            return (f"Model not found: {model_name}", gr.update())
+        return (self._get_model_info(model_name), gr.update(value=model.n_gpu_layers))
+
+    @staticmethod
+    def _example_text(texts: list[str], index: int) -> str:
+        """Read one example text out of session state.
+
+        Args:
+            texts: Example texts for the active category.
+            index: Button index.
+
+        Returns:
+            The example text, or empty string if state is missing.
+        """
+        if not texts or index >= len(texts):
+            return ""
+        return texts[index]
+
+    # =========================================================================
+    # Generation
+    # =========================================================================
+
     def _generate_prompt(
         self,
         user_input: str,
@@ -373,7 +508,7 @@ class GradioApp:
         model_choice: str,
         temperature: float,
         max_tokens: int,
-        _n_gpu_layers: int,
+        n_gpu_layers: int,
     ) -> Iterator[str]:
         """Generate a prompt using the selected model and role.
 
@@ -383,7 +518,7 @@ class GradioApp:
             model_choice: Selected model display name.
             temperature: Generation temperature.
             max_tokens: Maximum tokens to generate.
-            _n_gpu_layers: GPU layers override (currently unused in generation).
+            n_gpu_layers: GPU offload override for this generation.
 
         Yields:
             Generated text chunks.
@@ -393,7 +528,6 @@ class GradioApp:
             return
 
         try:
-            # Create request
             request = PromptGenerationRequest(
                 user_input=user_input,
                 role_display_name=role_choice,
@@ -401,15 +535,15 @@ class GradioApp:
                 max_tokens=int(max_tokens),
             )
 
-            # Get model
             model = self.model_service.get_model_by_name(model_choice)
             if model is None:
                 yield f"Model not found: {model_choice}"
                 return
 
-            # Generate with streaming
             accumulated = ""
-            for chunk in self.prompt_service.generate(request, model):
+            for chunk in self.prompt_service.generate(
+                request, model, n_gpu_layers_override=int(n_gpu_layers)
+            ):
                 accumulated += chunk
                 yield accumulated
 
@@ -417,10 +551,100 @@ class GradioApp:
             logger.exception("Generation error")
             yield f"Error: {e}"
 
+    def _record_generation(
+        self,
+        history: list[hist.HistoryEntry],
+        user_input: str,
+        role_choice: str,
+        model_choice: str,
+        generated: str,
+    ) -> tuple[list[hist.HistoryEntry], Any, str]:
+        """Append a finished generation to the session history.
+
+        Args:
+            history: Existing history, newest first.
+            user_input: The idea that produced the prompt.
+            role_choice: Target display name.
+            model_choice: Model display name.
+            generated: The generated prompt text.
+
+        Returns:
+            Tuple of (history, history dropdown update, stats markdown).
+        """
+        if not generated.strip() or not user_input.strip():
+            return (history, gr.update(), "")
+
+        result = PromptGenerationResult(
+            content=generated,
+            model_used=model_choice,
+            role_used=role_choice,
+        )
+        entry = hist.HistoryEntry(
+            user_input=user_input,
+            role_display_name=role_choice,
+            model_name=model_choice,
+            result=result,
+        )
+        updated = hist.add_entry(history, entry)
+        return (
+            updated,
+            gr.update(choices=hist.labels(updated), value=None),
+            self._format_stats(result),
+        )
+
+    def _restore_history(
+        self,
+        history: list[hist.HistoryEntry],
+        label: str,
+    ) -> tuple[Any, Any, Any, str]:
+        """Restore inputs and output from a history entry.
+
+        Args:
+            history: Session history, newest first.
+            label: Selected history label.
+
+        Returns:
+            Tuple of (user idea, role dropdown, output, stats markdown).
+        """
+        entry = hist.find_by_label(history, label) if label else None
+        if entry is None:
+            return (gr.update(), gr.update(), gr.update(), "")
+
+        return (
+            entry.user_input,
+            gr.update(value=entry.role_display_name),
+            entry.result.content,
+            self._format_stats(entry.result),
+        )
+
+    @staticmethod
+    def _clear_history() -> tuple[list[hist.HistoryEntry], Any]:
+        """Drop all history for this session.
+
+        Returns:
+            Tuple of (empty history, cleared dropdown update).
+        """
+        return ([], gr.update(choices=[], value=None))
+
+    @staticmethod
+    def _format_stats(result: PromptGenerationResult) -> str:
+        """Render the character and word count line.
+
+        Args:
+            result: The generation result.
+
+        Returns:
+            Markdown stats line.
+        """
+        return f"*{result.char_count} characters · {result.word_count} words · {result.model_used}*"
+
+    # =========================================================================
+    # Info panels
+    # =========================================================================
+
     def _get_role_info(self, role_choice: str) -> str:
         """Get role description for display."""
-        role_repo = self.prompt_service.generate_prompt_use_case.role_repository
-        role = role_repo.get_by_display_name(role_choice)
+        role = self.role_repository.get_by_display_name(role_choice)
         if role:
             return f"**{role.description}**"
         return ""
@@ -429,17 +653,26 @@ class GradioApp:
         """Get model description for display."""
         model = self.model_service.get_model_by_name(model_choice)
         if model:
-            return f"**{model.description}**\n\nVRAM usage: {model.vram_required}"
+            return (
+                f"**{model.description}**\n\n"
+                f"VRAM usage: {model.vram_required} · Context: {model.context_length:,} tokens"
+            )
         return ""
+
+    def _gpu_status_text(self) -> str:
+        """Build the GPU status line shown in header and sidebar."""
+        if self.gpu_info and self.gpu_info.is_available:
+            return f"{self.gpu_info.name} ({self.gpu_info.vram_gb:.0f}GB VRAM)"
+        return "CPU mode (no GPU detected)"
+
+    # =========================================================================
+    # Model management
+    # =========================================================================
 
     def _refresh_models_list(self) -> tuple[str, Any, Any, Any]:
         """Refresh the list of downloaded models."""
         models = self.model_service.get_available_models()
-        downloaded = []
-
-        for model in models:
-            if self.model_service.is_model_downloaded(model):
-                downloaded.append(model)
+        downloaded = [m for m in models if self.model_service.is_model_downloaded(m)]
 
         if not downloaded:
             return (
@@ -493,6 +726,10 @@ class GradioApp:
             return gr.update(value=f"Deleted {count} models", visible=True)
         return gr.update(value="No models to delete", visible=True)
 
+    # =========================================================================
+    # Chrome
+    # =========================================================================
+
     def _create_header_html(self, gpu_status: str) -> str:
         """Create header HTML with logo and status."""
         logo_html = self._get_logo_html()
@@ -514,6 +751,7 @@ class GradioApp:
         <div style="text-align: center; padding: 20px 0; margin-top: 20px; border-top: 1px solid #334155;">
             <p style="color: #64748b; font-size: 12px; margin: 0;">
                 PromptMill v{__version__} |
+                <a href="/docs" style="color: #818cf8; text-decoration: none;">API</a> |
                 <a href="https://github.com/kekzl/PromptMill" style="color: #818cf8; text-decoration: none;">GitHub</a>
             </p>
         </div>
@@ -531,31 +769,43 @@ class GradioApp:
             logger.warning(f"Failed to load logo: {e}")
         return '<h1 style="color: #818cf8; margin: 0;">PromptMill</h1>'
 
-    def _create_fastapi_app(self) -> FastAPI:
-        """Create FastAPI app with health endpoint and Gradio mounted.
+    # =========================================================================
+    # Server
+    # =========================================================================
+
+    def create_fastapi_app(self) -> FastAPI:
+        """Create the FastAPI app with health, REST API and Gradio mounted.
 
         Returns:
             Configured FastAPI application.
         """
-        fastapi_app = FastAPI(title="PromptMill", version=__version__)
+        if self._app is None:
+            self.create()
 
-        @fastapi_app.get("/health")
-        def health_check() -> JSONResponse:
-            """Health check endpoint for container orchestration."""
-            status = self.health_service.get_status()
-            return JSONResponse(content=dict(status))
+        fastapi_app = FastAPI(
+            title="PromptMill",
+            version=__version__,
+            description="Local prompt generator for image, video, audio, 3D and writing targets.",
+        )
+
+        fastapi_app.include_router(
+            create_api_router(
+                prompt_service=self.prompt_service,
+                model_service=self.model_service,
+                health_service=self.health_service,
+                role_repository=self.role_repository,
+            )
+        )
 
         # Mount Gradio app at root. Theme and CSS are supplied here because
         # Gradio 6 removed them from the Blocks constructor.
-        fastapi_app = gr.mount_gradio_app(
+        return gr.mount_gradio_app(
             fastapi_app,
             self._app,
             path="/",
             theme=create_theme(),
             css=CUSTOM_CSS,
         )
-
-        return fastapi_app
 
     def launch(self, host: str, port: int) -> None:
         """Launch the Gradio application.
@@ -564,10 +814,7 @@ class GradioApp:
             host: Server host address.
             port: Server port number.
         """
-        if self._app is None:
-            self.create()
-
-        fastapi_app = self._create_fastapi_app()
+        fastapi_app = self.create_fastapi_app()
 
         logger.info(f"Starting server on {host}:{port}")
         uvicorn.run(fastapi_app, host=host, port=port, log_level="info")

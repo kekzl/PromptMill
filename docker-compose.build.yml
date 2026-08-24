@@ -1,0 +1,31 @@
+# Build overlay for contributors.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml \
+#     --profile gpu up -d --build
+#
+# The GPU image compiles llama-cpp-python against CUDA and takes a while.
+# Users who just want to run PromptMill should stay on the plain
+# docker-compose.yml and pull the prebuilt image.
+
+services:
+  promptmill-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+
+  promptmill-cpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpu
+
+  # Lint, type check and test. Needs no GPU and no llama-cpp compile.
+  #   docker compose -f docker-compose.yml -f docker-compose.build.yml \
+  #     --profile test run --rm test
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    profiles: ["test"]
+    volumes:
+      - .:/app
+    working_dir: /app

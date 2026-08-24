@@ -1,18 +1,21 @@
 # PromptMill - GPU/CUDA Build (Multi-stage)
 # AI Prompt Generator with local LLM
+#
+# Ubuntu 26.04 ships Python 3.14 as its system python3, so builder and runtime
+# share one interpreter version with the CPU image (python:3.14-slim-trixie).
 
 # =============================================================================
 # Stage 1: Build llama-cpp-python with CUDA support
 # =============================================================================
-FROM nvidia/cuda:13.3.1-devel-ubuntu24.04 AS builder
+FROM nvidia/cuda:13.3.1-devel-ubuntu26.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 
 RUN apt-get update && apt-get install -y \
-    python3.12 \
-    python3.12-venv \
-    python3.12-dev \
+    python3.14 \
+    python3.14-venv \
+    python3.14-dev \
     python3-pip \
     git \
     build-essential \
@@ -20,15 +23,17 @@ RUN apt-get update && apt-get install -y \
     ninja-build \
     && rm -rf /var/lib/apt/lists/*
 
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 \
-    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.14 1 \
+    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.14 1
 
 # Create virtual environment for cleaner copy to runtime
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 # CUDA build environment
-ENV CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc"
+# -lstdc++ is explicit on purpose: llama-cpp-python 0.3.35 otherwise links its
+# ggml shared objects without the C++ runtime, which makes them fail to dlopen.
+ENV CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DCMAKE_SHARED_LINKER_FLAGS=-lstdc++"
 ENV FORCE_CMAKE=1
 ENV CUDACXX=/usr/local/cuda/bin/nvcc
 ENV CUDA_HOME=/usr/local/cuda
@@ -41,30 +46,30 @@ RUN pip install --no-cache-dir --upgrade pip
 
 # Install Python dependencies
 RUN pip install --no-cache-dir \
-    "huggingface_hub>=1.0.0,<2.0.0" \
-    "gradio>=6.6.0,<7.0.0" \
-    "pytest>=8.4.0" \
-    "pytest-cov>=7.0.0"
+    "huggingface_hub>=1.28.0,<2.0.0" \
+    "gradio>=6.25.0,<7.0.0"
 
 # Install llama-cpp-python with CUDA (this is the heavy compile step)
-RUN pip install --no-cache-dir "llama-cpp-python>=0.3.0,<1.0.0"
+RUN pip install --no-cache-dir "llama-cpp-python>=0.3.35,<1.0.0"
 
 # =============================================================================
 # Stage 2: Runtime image (smaller, no build tools)
 # =============================================================================
-FROM nvidia/cuda:13.3.1-runtime-ubuntu24.04
+FROM nvidia/cuda:13.3.1-runtime-ubuntu26.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 ENV PYTHONUNBUFFERED=1
 
-# Install only Python runtime (no dev packages)
+# Python runtime plus libgomp1: the CUDA runtime base ships no OpenMP runtime,
+# but ggml links against it, so without it libllama.so fails to dlopen.
 RUN apt-get update && apt-get install -y \
-    python3.12 \
-    python3.12-venv \
+    python3.14 \
+    python3.14-venv \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/* \
-    && update-alternatives --install /usr/bin/python python /usr/bin/python3.12 1 \
-    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
+    && update-alternatives --install /usr/bin/python python /usr/bin/python3.14 1 \
+    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.14 1
 
 # Copy virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
@@ -73,14 +78,13 @@ ENV PATH="/opt/venv/bin:$PATH"
 WORKDIR /app
 
 # Create non-root user for security.
-# Ubuntu 24.04 base images ship a default "ubuntu" user at UID 1000; remove it
-# so our app user can own that UID (keeps parity with the CPU image + volume).
+# Ubuntu base images ship a default "ubuntu" user at UID 1000; remove it so our
+# app user can own that UID (keeps parity with the CPU image + volume).
 RUN userdel -r ubuntu 2>/dev/null || true \
     && useradd -m -s /bin/bash -u 1000 promptmill
 
 COPY --chown=promptmill:promptmill src/ ./src/
 COPY --chown=promptmill:promptmill assets/ ./assets/
-COPY --chown=promptmill:promptmill tests/ ./tests/
 
 # Create models directory and set ownership of entire app directory
 RUN mkdir -p /app/models && chown -R promptmill:promptmill /app
@@ -89,12 +93,19 @@ ENV PYTHONPATH=/app/src
 ENV HF_HOME=/app/models/.cache
 ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64
 
+# Bind to all interfaces: a container port is only reachable via -p anyway.
+ENV SERVER_HOST=0.0.0.0
+ENV SERVER_PORT=7610
+
+# Model cache survives container recreation.
+VOLUME ["/app/models"]
+
 # Switch to non-root user
 USER promptmill
 
 EXPOSE 7610
 
-# Health check using new /health endpoint
+# Health check using the /health endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:7610/health')" || exit 1
 

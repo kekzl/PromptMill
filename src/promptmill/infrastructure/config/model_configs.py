@@ -1,4 +1,8 @@
-"""Model configurations by VRAM tier."""
+"""Model configurations by VRAM tier.
+
+All tiers run Dolphin 3.0 (uncensored). ``vram_required`` is weights plus the
+KV cache at the configured context length, not weights alone.
+"""
 
 from promptmill.domain.entities.model import Model
 
@@ -12,7 +16,7 @@ MODEL_CONFIGS: dict[str, Model] = {
         context_length=4096,
         n_gpu_layers=0,  # CPU only
         description="Dolphin 3.0 1B Q8 - Uncensored, lightweight",
-        vram_required="~1GB",
+        vram_required="~1.5GB",
         revision="main",
     ),
     "4gb_vram": Model(
@@ -39,7 +43,7 @@ MODEL_CONFIGS: dict[str, Model] = {
     ),
     "8gb_vram": Model(
         key="8gb_vram",
-        name="8GB VRAM (RTX 3070, RTX 4060)",
+        name="8GB VRAM (RTX 3070, RTX 4060, RTX 5060)",
         repo_id="bartowski/Dolphin3.0-Llama3.1-8B-GGUF",
         filename="Dolphin3.0-Llama3.1-8B-Q4_K_M.gguf",
         context_length=8192,
@@ -50,35 +54,35 @@ MODEL_CONFIGS: dict[str, Model] = {
     ),
     "12gb_vram": Model(
         key="12gb_vram",
-        name="12GB VRAM (RTX 3060 12GB, RTX 4070)",
+        name="12GB VRAM (RTX 3060 12GB, RTX 4070, RTX 5070)",
         repo_id="bartowski/Dolphin3.0-Llama3.1-8B-GGUF",
         filename="Dolphin3.0-Llama3.1-8B-Q6_K_L.gguf",
         context_length=8192,
         n_gpu_layers=-1,
         description="Dolphin 3.0 8B Q6_K_L - Uncensored, premium",
-        vram_required="~10GB",
+        vram_required="~8GB",
         revision="main",
     ),
     "16gb_vram": Model(
         key="16gb_vram",
-        name="16GB+ VRAM (RTX 4080, RTX 4090)",
+        name="16GB VRAM (RTX 4080, RTX 5070 Ti, RTX 5080)",
         repo_id="bartowski/Dolphin3.0-Llama3.1-8B-GGUF",
         filename="Dolphin3.0-Llama3.1-8B-Q8_0.gguf",
-        context_length=8192,
+        context_length=16384,
         n_gpu_layers=-1,
         description="Dolphin 3.0 8B Q8 - Uncensored, maximum quality",
-        vram_required="~12GB",
+        vram_required="~10GB",
         revision="main",
     ),
     "24gb_vram": Model(
         key="24gb_vram",
-        name="24GB+ VRAM (RTX 3090, RTX 4090)",
-        repo_id="bartowski/dolphin-2.9.4-llama3.1-8b-GGUF",
-        filename="dolphin-2.9.4-llama3.1-8b-Q8_0.gguf",
-        context_length=131072,  # 128K context
+        name="24GB+ VRAM (RTX 3090, RTX 4090, RTX 5090)",
+        repo_id="bartowski/Dolphin3.0-Llama3.1-8B-GGUF",
+        filename="Dolphin3.0-Llama3.1-8B-Q8_0.gguf",
+        context_length=32768,
         n_gpu_layers=-1,
-        description="Dolphin 2.9.4 8B Q8 - Uncensored, maximum precision",
-        vram_required="~10GB",
+        description="Dolphin 3.0 8B Q8, 32K context - Uncensored, longest context",
+        vram_required="~13GB",
         revision="main",
     ),
 }

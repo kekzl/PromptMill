@@ -19,7 +19,7 @@ jobs:
           version: "latest"
 
       - name: Set up Python
-        run: uv python install 3.12
+        run: uv python install 3.13
 
       - name: Install dependencies
         run: uv sync --extra dev
@@ -31,8 +31,12 @@ jobs:
         run: uv run ruff format --check .
 
   test:
-    name: Tests
+    name: Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7
 
@@ -42,20 +46,35 @@ jobs:
           version: "latest"
 
       - name: Set up Python
-        run: uv python install 3.12
+        run: uv python install ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync --extra dev
+        run: uv sync --extra dev --python ${{ matrix.python-version }}
 
       - name: Run tests with coverage
         run: uv run pytest --cov=src/promptmill --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage
+        if: matrix.python-version == '3.13'
         uses: codecov/codecov-action@v7
         with:
           files: ./coverage.xml
           fail_ci_if_error: false
         continue-on-error: true
+
+  # Branch protection requires a status check literally named "Tests". The
+  # matrix reports one context per Python version, so this job carries that
+  # name and fails if any matrix entry did.
+  tests-complete:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: test
+    if: always()
+    steps:
+      - name: Check matrix result
+        run: |
+          echo "matrix result: ${{ needs.test.result }}"
+          [ "${{ needs.test.result }}" = "success" ]
 
   docker-build:
     name: Docker Build
@@ -66,9 +85,19 @@ jobs:
       - name: Build CPU Docker image
         run: docker build -f Dockerfile.cpu -t promptmill:cpu-test .
 
-      - name: Test container starts
+      # The inference runtime loads through ctypes at call time, so a broken
+      # link only shows up on a user's first generation. Import it here.
+      - name: Verify the inference runtime loads
+        run: docker run --rm promptmill:cpu-test python -c "import llama_cpp; print(llama_cpp.__version__)"
+
+      - name: Test container starts and serves the API
         run: |
-          docker run -d --name test-container -p 7610:7610 -e SERVER_HOST=0.0.0.0 promptmill:cpu-test
-          sleep 10
-          curl -f http://localhost:7610/ || (docker logs test-container && exit 1)
+          docker run -d --name test-container -p 7610:7610 promptmill:cpu-test
+          for _ in $(seq 1 30); do
+            if curl -fsS http://localhost:7610/health >/dev/null; then break; fi
+            sleep 2
+          done
+          curl -f http://localhost:7610/health || (docker logs test-container && exit 1)
+          curl -f http://localhost:7610/api/targets >/dev/null || (docker logs test-container && exit 1)
+          curl -f http://localhost:7610/ >/dev/null || (docker logs test-container && exit 1)
           docker stop test-container

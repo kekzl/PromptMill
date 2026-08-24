@@ -17,6 +17,9 @@ class Settings:
     host: str = field(default_factory=lambda: os.environ.get("SERVER_HOST", "127.0.0.1"))
     port: int = field(default_factory=lambda: int(os.environ.get("SERVER_PORT", "7610")))
 
+    # Logging
+    log_level: str = field(default_factory=lambda: os.environ.get("LOG_LEVEL", "INFO").upper())
+
     # Model storage
     models_dir: Path = field(
         default_factory=lambda: Path(os.environ.get("MODELS_DIR", "/app/models"))
@@ -24,6 +27,7 @@ class Settings:
 
     # LLM configuration
     default_batch_size: int = 512
+    # Fallback only: each Model carries its own chat_format.
     default_chat_format: str = "llama-3"
     gpu_detection_timeout: int = 5
 

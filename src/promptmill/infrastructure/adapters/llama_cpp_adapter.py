@@ -19,7 +19,7 @@ class LlamaCppAdapter(LLMPort):
     for local LLM inference.
     """
 
-    __slots__ = ("_batch_size", "_chat_format", "_llm", "_model_path")
+    __slots__ = ("_batch_size", "_default_chat_format", "_gpu_layers", "_llm", "_model_path")
 
     def __init__(
         self,
@@ -29,12 +29,14 @@ class LlamaCppAdapter(LLMPort):
         """Initialize the adapter.
 
         Args:
-            chat_format: Chat template format to use.
+            chat_format: Fallback chat template, used when a model does not
+                declare its own.
             batch_size: Batch size for inference.
         """
         self._llm: Any = None  # Llama instance, Any to avoid import at module level
         self._model_path: str | None = None
-        self._chat_format = chat_format
+        self._gpu_layers: int | None = None
+        self._default_chat_format = chat_format
         self._batch_size = batch_size
 
     @override
@@ -108,11 +110,21 @@ class LlamaCppAdapter(LLMPort):
         return self._model_path
 
     @override
+    def get_loaded_gpu_layers(self) -> int | None:
+        """Get the GPU layer count the current model was loaded with.
+
+        Returns:
+            Layer count if a model is loaded, None otherwise.
+        """
+        return self._gpu_layers
+
+    @override
     def load(
         self,
         model_path: str,
         n_gpu_layers: int,
         context_length: int,
+        chat_format: str | None = None,
     ) -> None:
         """Load a model for inference.
 
@@ -120,6 +132,7 @@ class LlamaCppAdapter(LLMPort):
             model_path: Path to the model file.
             n_gpu_layers: Number of layers to offload to GPU (-1 for all).
             context_length: Maximum context window size.
+            chat_format: Chat template name, or None to use the adapter default.
 
         Raises:
             FileNotFoundError: If model file doesn't exist.
@@ -133,8 +146,13 @@ class LlamaCppAdapter(LLMPort):
         if self._llm is not None:
             self.unload()
 
+        effective_chat_format = chat_format or self._default_chat_format
+
         logger.info(f"Loading model: {model_path}")
-        logger.info(f"Config: n_gpu_layers={n_gpu_layers}, n_ctx={context_length}")
+        logger.info(
+            f"Config: n_gpu_layers={n_gpu_layers}, n_ctx={context_length}, "
+            f"chat_format={effective_chat_format}"
+        )
 
         try:
             # Lazy import to avoid loading llama_cpp until needed
@@ -145,16 +163,18 @@ class LlamaCppAdapter(LLMPort):
                 n_ctx=context_length,
                 n_gpu_layers=n_gpu_layers,
                 n_batch=self._batch_size,
-                chat_format=self._chat_format,
+                chat_format=effective_chat_format,
                 verbose=False,
             )
             self._model_path = model_path
+            self._gpu_layers = n_gpu_layers
             logger.info("Model loaded successfully")
 
         except Exception as e:
             logger.error(f"Failed to load model: {e}")
             self._llm = None
             self._model_path = None
+            self._gpu_layers = None
             raise ModelLoadError(model_path, str(e)) from e
 
     @override
@@ -165,5 +185,6 @@ class LlamaCppAdapter(LLMPort):
             del self._llm
             self._llm = None
             self._model_path = None
+            self._gpu_layers = None
             gc.collect()
             logger.info("Model unloaded, memory freed")

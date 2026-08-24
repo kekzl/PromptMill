@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from threading import RLock, Timer
 from typing import TYPE_CHECKING
 
@@ -38,16 +38,13 @@ class PromptService:
 
     _current_model: Model | None = None
     _unload_timer: Timer | None = None
-    _timer_lock: RLock | None = None
-
-    def __post_init__(self) -> None:
-        """Initialize timer lock."""
-        self._timer_lock = RLock()
+    _timer_lock: RLock = field(default_factory=RLock)
 
     def generate(
         self,
         request: PromptGenerationRequest,
         model: Model,
+        n_gpu_layers_override: int | None = None,
     ) -> Iterator[str]:
         """Generate a prompt with automatic model management.
 
@@ -59,6 +56,8 @@ class PromptService:
         Args:
             request: The prompt generation request.
             model: The model to use for generation.
+            n_gpu_layers_override: GPU offload to use instead of the model's own
+                default. None keeps ``model.n_gpu_layers``.
 
         Yields:
             Text chunks as they are generated.
@@ -67,7 +66,7 @@ class PromptService:
         self._cancel_unload_timer()
 
         # Load model if needed
-        self.load_model_use_case.execute(model, self.models_dir)
+        self.load_model_use_case.execute(model, self.models_dir, n_gpu_layers_override)
         self._current_model = model
 
         try:
