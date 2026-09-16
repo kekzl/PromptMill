@@ -211,7 +211,7 @@ Health response:
 ```json
 {
   "status": "healthy",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "model_loaded": false,
   "model_path": null,
   "roles_count": 146,
