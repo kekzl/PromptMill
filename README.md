@@ -82,7 +82,7 @@ Open **http://localhost:7610** - API docs at **http://localhost:7610/docs**.
 | `ghcr.io/kekzl/promptmill:cpu` | `python:3.14-slim-trixie` | No GPU required |
 | `ghcr.io/kekzl/promptmill:gpu` | `nvidia/cuda:13.4.1-ubuntu26.04` | NVIDIA GPU, CUDA offload |
 
-Version-pinned tags follow releases: `ghcr.io/kekzl/promptmill:3.4.0-cpu`.
+Version-pinned tags follow releases: `ghcr.io/kekzl/promptmill:3.4.1-cpu`.
 
 ### Building from source
 
@@ -212,7 +212,7 @@ Health response:
 ```json
 {
   "status": "healthy",
-  "version": "3.4.0",
+  "version": "3.4.1",
   "model_loaded": false,
   "model_path": null,
   "roles_count": 169,
