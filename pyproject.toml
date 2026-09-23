@@ -131,6 +131,11 @@ warn_unused_configs = true
 disallow_untyped_defs = false
 check_untyped_defs = true
 
+# Not installed in the test image; imported lazily inside the adapter.
+[[tool.mypy.overrides]]
+module = ["llama_cpp"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

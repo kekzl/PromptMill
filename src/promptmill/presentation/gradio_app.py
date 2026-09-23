@@ -106,7 +106,8 @@ class GradioApp:
 
         # In Gradio 6 the ``theme`` and ``css`` parameters moved off the Blocks
         # constructor and are supplied at mount/launch time instead.
-        with gr.Blocks(title="PromptMill") as app:
+        app = gr.Blocks(title="PromptMill")
+        with app:
             # Session state: examples for the active target, and the prompt
             # history. Both are per-browser-session, never server-global.
             examples_state = gr.State([text for _, text in initial_examples])
@@ -799,13 +800,14 @@ class GradioApp:
 
         # Mount Gradio app at root. Theme and CSS are supplied here because
         # Gradio 6 removed them from the Blocks constructor.
-        return gr.mount_gradio_app(
+        mounted: FastAPI = gr.mount_gradio_app(
             fastapi_app,
             self._app,
             path="/",
             theme=create_theme(),
             css=CUSTOM_CSS,
         )
+        return mounted
 
     def launch(self, host: str, port: int) -> None:
         """Launch the Gradio application.
