@@ -129,6 +129,7 @@ class TestLoadModelUseCase:
         model_path = str(tmp_path / sample_model.filename)
         mock_llm.get_loaded_model_path.return_value = model_path
         mock_llm.get_loaded_gpu_layers.return_value = sample_model.n_gpu_layers
+        mock_llm.get_loaded_context_length.return_value = sample_model.context_length
 
         use_case = LoadModelUseCase(
             llm=mock_llm,
@@ -152,6 +153,7 @@ class TestLoadModelUseCase:
         model_path = str(tmp_path / sample_model.filename)
         mock_llm.get_loaded_model_path.return_value = model_path
         mock_llm.get_loaded_gpu_layers.return_value = sample_model.n_gpu_layers
+        mock_llm.get_loaded_context_length.return_value = sample_model.context_length
         mock_model_repository.get_model_path.return_value = Path(model_path)
 
         use_case = LoadModelUseCase(
@@ -164,6 +166,32 @@ class TestLoadModelUseCase:
 
         mock_llm.load.assert_called_once()
         assert mock_llm.load.call_args.kwargs["n_gpu_layers"] == 12
+
+    def test_load_model_reloads_when_context_length_changes(
+        self,
+        mock_llm: MagicMock,
+        mock_model_repository: MagicMock,
+        sample_model: Model,
+        tmp_path: Path,
+        model_lock: RLock,
+    ) -> None:
+        """Same file and split with a different context is a different configuration."""
+        model_path = str(tmp_path / sample_model.filename)
+        mock_llm.get_loaded_model_path.return_value = model_path
+        mock_llm.get_loaded_gpu_layers.return_value = sample_model.n_gpu_layers
+        mock_llm.get_loaded_context_length.return_value = sample_model.context_length // 2
+        mock_model_repository.get_model_path.return_value = Path(model_path)
+
+        use_case = LoadModelUseCase(
+            llm=mock_llm,
+            model_repository=mock_model_repository,
+            lock=model_lock,
+        )
+
+        use_case.execute(sample_model, tmp_path)
+
+        mock_llm.load.assert_called_once()
+        assert mock_llm.load.call_args.kwargs["context_length"] == sample_model.context_length
 
     def test_load_model_passes_chat_format(
         self,

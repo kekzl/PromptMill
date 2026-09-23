@@ -19,7 +19,14 @@ class LlamaCppAdapter(LLMPort):
     for local LLM inference.
     """
 
-    __slots__ = ("_batch_size", "_default_chat_format", "_gpu_layers", "_llm", "_model_path")
+    __slots__ = (
+        "_batch_size",
+        "_context_length",
+        "_default_chat_format",
+        "_gpu_layers",
+        "_llm",
+        "_model_path",
+    )
 
     def __init__(
         self,
@@ -36,6 +43,7 @@ class LlamaCppAdapter(LLMPort):
         self._llm: Any = None  # Llama instance, Any to avoid import at module level
         self._model_path: str | None = None
         self._gpu_layers: int | None = None
+        self._context_length: int | None = None
         self._default_chat_format = chat_format
         self._batch_size = batch_size
 
@@ -120,6 +128,15 @@ class LlamaCppAdapter(LLMPort):
         return self._gpu_layers
 
     @override
+    def get_loaded_context_length(self) -> int | None:
+        """Get the context window the current model was loaded with.
+
+        Returns:
+            Context length if a model is loaded, None otherwise.
+        """
+        return self._context_length
+
+    @override
     def load(
         self,
         model_path: str,
@@ -169,6 +186,7 @@ class LlamaCppAdapter(LLMPort):
             )
             self._model_path = model_path
             self._gpu_layers = n_gpu_layers
+            self._context_length = context_length
             logger.info("Model loaded successfully")
 
         except Exception as e:
@@ -176,6 +194,7 @@ class LlamaCppAdapter(LLMPort):
             self._llm = None
             self._model_path = None
             self._gpu_layers = None
+            self._context_length = None
             raise ModelLoadError(model_path, str(e)) from e
 
     @override
@@ -187,5 +206,6 @@ class LlamaCppAdapter(LLMPort):
             self._llm = None
             self._model_path = None
             self._gpu_layers = None
+            self._context_length = None
             gc.collect()
             logger.info("Model unloaded, memory freed")

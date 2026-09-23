@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from threading import RLock, Timer
+from threading import Lock, RLock, Timer
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -39,6 +39,9 @@ class PromptService:
     _current_model: Model | None = None
     _unload_timer: Timer | None = None
     _timer_lock: RLock = field(default_factory=RLock)
+    # Serializes load + stream: one llama.cpp context, not thread-safe.
+    # Plain Lock, since Gradio may resume a generator on another thread.
+    _generation_lock: Lock = field(default_factory=Lock)
 
     def generate(
         self,
@@ -62,19 +65,14 @@ class PromptService:
         Yields:
             Text chunks as they are generated.
         """
-        # Cancel any pending unload
-        self._cancel_unload_timer()
-
-        # Load model if needed
-        self.load_model_use_case.execute(model, self.models_dir, n_gpu_layers_override)
-        self._current_model = model
-
-        try:
-            # Generate prompt
-            yield from self.generate_prompt_use_case.execute(request)
-        finally:
-            # Schedule unload after generation
-            self._schedule_unload()
+        with self._generation_lock:
+            self._cancel_unload_timer()
+            try:
+                self.load_model_use_case.execute(model, self.models_dir, n_gpu_layers_override)
+                self._current_model = model
+                yield from self.generate_prompt_use_case.execute(request)
+            finally:
+                self._schedule_unload()
 
     def _schedule_unload(self) -> None:
         """Schedule automatic model unload after delay."""
@@ -100,9 +98,15 @@ class PromptService:
         with self._timer_lock:
             self._unload_timer = None
 
-        logger.info("Auto-unloading model due to inactivity")
-        self.unload_model_use_case.execute()
-        self._current_model = None
+        # A running generation reschedules the timer when it ends.
+        if not self._generation_lock.acquire(blocking=False):
+            return
+        try:
+            logger.info("Auto-unloading model due to inactivity")
+            self.unload_model_use_case.execute()
+            self._current_model = None
+        finally:
+            self._generation_lock.release()
 
     def shutdown(self) -> None:
         """Clean shutdown - cancel timers and unload model."""
