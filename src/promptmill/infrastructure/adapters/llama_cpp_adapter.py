@@ -6,7 +6,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, override
 
-from promptmill.domain.exceptions import ModelLoadError, ModelNotLoadedError
+from promptmill.domain.exceptions import GenerationError, ModelLoadError, ModelNotLoadedError
 from promptmill.domain.ports.llm_port import LLMPort
 
 logger = logging.getLogger(__name__)
@@ -60,6 +60,7 @@ class LlamaCppAdapter(LLMPort):
 
         Raises:
             ModelNotLoadedError: If no model is loaded.
+            GenerationError: If the runtime fails mid-generation.
         """
         if self._llm is None:
             raise ModelNotLoadedError()
@@ -89,7 +90,7 @@ class LlamaCppAdapter(LLMPort):
 
         except Exception as e:
             logger.error(f"Generation error: {e}")
-            raise
+            raise GenerationError(str(e)) from e
 
     @override
     def is_loaded(self) -> bool:

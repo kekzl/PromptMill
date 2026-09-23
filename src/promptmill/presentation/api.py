@@ -6,6 +6,7 @@ usable from a script or another service without driving Gradio.
 
 import logging
 from collections.abc import Iterator
+from itertools import chain
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query
@@ -103,6 +104,7 @@ def create_api_router(
     model_service: ModelService,
     health_service: HealthService,
     role_repository: RoleRepositoryPort,
+    default_model: Model,
 ) -> APIRouter:
     """Build the REST router bound to the application services.
 
@@ -111,6 +113,7 @@ def create_api_router(
         model_service: Service used for model lookup and status.
         health_service: Service backing the health endpoint.
         role_repository: Repository used to list targets.
+        default_model: Tier used when a request names none, detected once at startup.
 
     Returns:
         Router with the health and /api routes mounted.
@@ -118,10 +121,9 @@ def create_api_router(
     router = APIRouter()
 
     def _resolve_model(name: str | None) -> Model:
-        """Resolve a model name, falling back to the auto-selected tier."""
+        """Resolve a model name, falling back to the startup-selected tier."""
         if name is None:
-            auto_selected, _ = model_service.select_optimal_model()
-            return auto_selected
+            return default_model
 
         named = model_service.get_model_by_name(name)
         if named is None:
@@ -220,9 +222,18 @@ def create_api_router(
         request = _build_request(body)
         model = _resolve_model(body.model)
 
+        # Pull the first chunk before answering: download and load run on it, and
+        # their failures must be a 503, not a 200 with error text in the body.
+        stream = prompt_service.generate(request, model)
+        try:
+            first = next(stream, "")
+        except PromptMillError as e:
+            logger.exception("API stream failed before first chunk")
+            raise HTTPException(status_code=503, detail=str(e)) from e
+
         def chunks() -> Iterator[str]:
             try:
-                yield from prompt_service.generate(request, model)
+                yield from chain([first], stream)
             except PromptMillError as e:
                 logger.exception("API stream failed")
                 yield f"\n[error] {e}"
