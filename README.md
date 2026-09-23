@@ -26,7 +26,7 @@ PromptMill is a self-contained web UI that runs **entirely locally** - no API ke
 <div align="center">
 <table>
 <tr>
-<td align="center"><b>146</b><br><sub>Prompt Targets</sub></td>
+<td align="center"><b>169</b><br><sub>Prompt Targets</sub></td>
 <td align="center"><b>7</b><br><sub>LLM Tiers</sub></td>
 <td align="center"><b>1B-8B</b><br><sub>Parameters</sub></td>
 <td align="center"><b>100%</b><br><sub>Local</sub></td>
@@ -100,8 +100,8 @@ compiler. The GPU image compiles it against CUDA, which takes a while.
 
 - **Smart GPU Detection** - Automatically selects the best model for your VRAM
 - **8 LLM Tiers** - From 1B (CPU) to 24B parameters (24GB+ VRAM) using uncensored Dolphin models
-- **146 Specialized Targets** - Video (36), Image (35), Audio (20), 3D (21), Creative (34)
-- **Category Filter** - Narrow 146 targets down to one category, or type to search
+- **169 Specialized Targets** - Video (43), Image (40), Audio (26), 3D (26), Creative (34)
+- **Category Filter** - Narrow 169 targets down to one category, or type to search
 - **Per-Category Examples** - The starter ideas match the selected target, not just video
 - **Session History** - The last 20 generations, restorable with their inputs
 - **REST API** - Generate prompts from scripts, streaming or buffered
@@ -136,20 +136,20 @@ compiler. The GPU image compiles it against CUDA, which takes a while.
 <tr>
 <td width="50%">
 
-### 🎬 Video (36)
-Wan2.1, Wan2.2, Wan2.5, Hunyuan Video, Hunyuan Video 1.5, Runway Gen-3, Runway Gen-4.5, Kling AI, Kling 2.1, Kling 2.5, Kling Video O1, Pika Labs, Pika 2.1, Pika 2.2, Luma Dream Machine, Luma Ray2, Luma Ray3, Sora, Sora 2, Veo, Veo 3, Veo 3.1, Hailuo AI, Hailuo 02, Grok Imagine, Vidu Q1, Seedance, SkyReels V1, Mochi 1, CogVideoX, LTX Video, LTX-2, Open-Sora, MovieGen, Pyramid Flow, Allegro
+### 🎬 Video (43)
+Wan2.1, Wan2.2, Wan2.5, Hunyuan Video, Hunyuan Video 1.5, Runway Gen-3, Runway Gen-4.5, Kling AI, Kling 2.1, Kling 2.5, Kling Video O1, Pika Labs, Pika 2.1, Pika 2.2, Luma Dream Machine, Luma Ray2, Luma Ray3, Sora, Sora 2, Veo, Veo 3, Veo 3.1, Hailuo AI, Hailuo 02, Grok Imagine, Vidu Q1, Seedance, SkyReels V1, Mochi 1, CogVideoX, LTX Video, LTX-2, Open-Sora, MovieGen, Pyramid Flow, Allegro, Kling 3.0, Seedance 2.0, Wan 2.6, Hailuo 2.3, PixVerse V5, Midjourney Video, Runway Aleph
 
-### 🖼️ Image (35)
-Stable Diffusion, SDXL, SD 3.5, Midjourney, Midjourney v7, FLUX, FLUX 2, FLUX 2 Max, FLUX Pro, FLUX Kontext, DALL-E 3, ComfyUI, Ideogram, Ideogram 3, Leonardo AI, Adobe Firefly, Adobe Firefly 3, Recraft, Recraft V3, Imagen 3, Imagen 4, GPT-4o Images, GPT Image 1.5, Reve Image, HiDream-I1, Qwen-Image, Qwen-Image Edit, Grok Image, Hunyuan Image 3.0, Seedream 4.5, Gemini 3 Pro Image, Playground v3, Krea AI, Luma Photon, Z-Image
+### 🖼️ Image (40)
+Stable Diffusion, SDXL, SD 3.5, Midjourney, Midjourney v7, FLUX, FLUX 2, FLUX 2 Max, FLUX Pro, FLUX Kontext, DALL-E 3, ComfyUI, Ideogram, Ideogram 3, Leonardo AI, Adobe Firefly, Adobe Firefly 3, Recraft, Recraft V3, Imagen 3, Imagen 4, GPT-4o Images, GPT Image 1.5, Reve Image, HiDream-I1, Qwen-Image, Qwen-Image Edit, Grok Image, Hunyuan Image 3.0, Seedream 4.5, Gemini 3 Pro Image, Playground v3, Krea AI, Luma Photon, Z-Image, GPT Image 2, Nano Banana 2, Midjourney V8, Ideogram 4, Reve 2.1
 
 </td>
 <td width="50%">
 
-### 🔊 Audio (20)
-Suno AI, Suno v4.5, Suno v5, Udio, Udio 2.0, ElevenLabs, ElevenLabs SFX, Eleven Music, Mureka AI, SOUNDRAW, Beatoven.ai, Stable Audio 2.0, Stable Audio 2.5, MusicGen, Google MusicFX, Riffusion, Bark, ACE Studio, AIVA, Boomy
+### 🔊 Audio (26)
+Suno AI, Suno v4.5, Suno v5, Udio, Udio 2.0, ElevenLabs, ElevenLabs SFX, Eleven Music, Mureka AI, SOUNDRAW, Beatoven.ai, Stable Audio 2.0, Stable Audio 2.5, MusicGen, Google MusicFX, Riffusion, Bark, ACE Studio, AIVA, Boomy, Suno v5.5, Lyria 3, MiniMax Music 2.5, ElevenLabs v3, ACE-Step, MMAudio
 
-### 🧊 3D (21)
-Meshy, Meshy 4, Meshy 5, Tripo AI, Tripo 2.0, Tripo 3.0, Rodin, Rodin Gen-2, Spline, Sloyd, 3DFY.ai, Luma Genie, Masterpiece X, Hunyuan3D, Hunyuan3D 2.1, Trellis, TripoSR, Unique3D, SF3D, InstantMesh, CSM 3D
+### 🧊 3D (26)
+Meshy, Meshy 4, Meshy 5, Tripo AI, Tripo 2.0, Tripo 3.0, Rodin, Rodin Gen-2, Spline, Sloyd, 3DFY.ai, Luma Genie, Masterpiece X, Hunyuan3D, Hunyuan3D 2.1, Trellis, TripoSR, Unique3D, SF3D, InstantMesh, CSM 3D, Hunyuan3D 3.0, TRELLIS.2, SAM 3D, Meshy 6, Marble
 
 ### ✍️ Creative (34)
 Story Writer, Code Generator, Technical Writer, Marketing Copy, SEO Content, Screenplay Writer, Social Media, Podcast Script, UX Writer, Press Release, Poetry, Data Analysis, Business Plan, Academic Writer, Tutorial Writer, Newsletter, Legal Documents, Grant Writing, API Documentation, Course Content, Pitch Deck, Meeting Notes, Changelog, Recipe Writer, Travel Guide, Workout Plan, Resume/CV, Cover Letter, Product Description, Email Template, Speech Writer, FAQ Writer, Bio Writer, Testimonial
@@ -215,7 +215,7 @@ Health response:
   "version": "3.3.1",
   "model_loaded": false,
   "model_path": null,
-  "roles_count": 146,
+  "roles_count": 169,
   "disk_usage_bytes": 0
 }
 ```
@@ -265,7 +265,7 @@ PromptMill/
 │   ├── infrastructure/      # Infrastructure layer (adapters, config)
 │   │   ├── adapters/        # LlamaCpp, HuggingFace, NvidiaSmi adapters
 │   │   ├── config/          # Settings, ModelConfigs
-│   │   └── persistence/     # RolesData (146 prompt templates)
+│   │   └── persistence/     # RolesData (169 prompt templates)
 │   └── presentation/        # Presentation layer
 │       ├── gradio_app.py    # Gradio UI
 │       ├── api.py           # REST API router

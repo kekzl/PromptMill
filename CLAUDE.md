@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 **PromptMill** (v3.3.1) - a self-contained Gradio web UI plus REST API that generates
-optimized prompts for image, video, audio, 3D and creative-writing targets. 146 prompt
+optimized prompts for image, video, audio, 3D and creative-writing targets. 169 prompt
 templates across those five categories; the model that writes them is picked automatically
 from the GPU's VRAM.
 
