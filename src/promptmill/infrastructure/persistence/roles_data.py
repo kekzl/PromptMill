@@ -996,7 +996,7 @@ Seedance 2.0 Best Practices:
 - Keep product and logo shots static and well lit for ads
 
 Output Format:
-Provide ONE prompt with references, shots and audio. If the user supplied no references, omit that part. Write finished prompt text; do not copy the numbered structure labels above. Output ONLY the prompt.""",
+Provide ONE prompt with references, shots and audio. If the user supplied no references, omit that part. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     "Wan 2.6": {
         "category": "Video",
@@ -1025,7 +1025,7 @@ Wan 2.6 Best Practices:
 - One clear action per shot
 
 Output Format:
-Provide ONE detailed prompt, with numbered shots for narratives. Write finished prompt text; do not copy the numbered structure labels above. Output ONLY the prompt.""",
+Provide ONE detailed prompt, with numbered shots for narratives. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     "Hailuo 2.3": {
         "category": "Video",
@@ -1053,7 +1053,7 @@ Hailuo 2.3 Best Practices:
 - Keep the scene to one location
 
 Output Format:
-Provide ONE prompt with bracketed camera commands. Write finished prompt text; do not copy the numbered structure labels above. Output ONLY the prompt.""",
+Provide ONE prompt with bracketed camera commands. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     "PixVerse V5": {
         "category": "Video",
@@ -1081,7 +1081,7 @@ PixVerse V5 Best Practices:
 - For image-to-video, describe only the motion, not the image content
 
 Output Format:
-Provide ONE concise prompt. Write finished prompt text; do not copy the numbered structure labels above. Output ONLY the prompt.""",
+Provide ONE concise prompt. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     "Midjourney Video": {
         "category": "Video",
@@ -1107,7 +1107,7 @@ Midjourney Video Best Practices:
 - Suggest --motion low or --motion high
 
 Output Format:
-Provide ONE motion prompt with the suggested motion parameter. Write finished prompt text; do not copy the numbered structure labels above. Output ONLY the prompt.""",
+Provide ONE motion prompt with the suggested motion parameter. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     "Runway Aleph": {
         "category": "Video",
@@ -1980,7 +1980,7 @@ GPT Image 2 Best Practices:
 - State the aspect ratio and resolution intent
 
 Output Format:
-Provide ONE descriptive prompt in natural language. Write finished prompt text; do not copy the numbered structure labels above. Output ONLY the prompt.""",
+Provide ONE descriptive prompt in natural language. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     "Nano Banana 2": {
         "category": "Image",
@@ -2009,7 +2009,7 @@ Nano Banana 2 Best Practices:
 - Give context of use ("for a café menu", "for a YouTube thumbnail")
 
 Output Format:
-Provide ONE narrative prompt. Write finished prompt text; do not copy the numbered structure labels above. Output ONLY the prompt.""",
+Provide ONE narrative prompt. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     "Midjourney V8": {
         "category": "Image",
@@ -2038,7 +2038,7 @@ Midjourney V8 Best Practices:
 - Avoid contradictory style words
 
 Output Format:
-Provide ONE Midjourney V8 prompt with suggested parameters. Write finished prompt text; do not copy the numbered structure labels above. Output ONLY the prompt.""",
+Provide ONE single-line Midjourney V8 prompt: comma-separated descriptive phrases, then the parameters. No field names such as "Subject:". Output ONLY the prompt.""",
     },
     "Ideogram 4": {
         "category": "Image",
@@ -2066,7 +2066,7 @@ Ideogram 4 Best Practices:
 - Specify the background (solid color, texture, scene)
 
 Output Format:
-Provide ONE design prompt with all text in quotes. Write finished prompt text; do not copy the numbered structure labels above. Output ONLY the prompt.""",
+Provide ONE design prompt with all text in quotes. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     "Reve 2.1": {
         "category": "Image",
@@ -2093,7 +2093,7 @@ Reve 2.1 Best Practices:
 - Keep style words consistent across the prompt
 
 Output Format:
-Provide ONE prompt with an explicit layout. Write finished prompt text; do not copy the numbered structure labels above. Output ONLY the prompt.""",
+Provide ONE prompt with an explicit layout. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     # =========================================================================
     # AUDIO GENERATION (26 targets)
@@ -2596,7 +2596,7 @@ Lyria 3 Best Practices:
 - State "instrumental, no vocals" explicitly when needed
 
 Output Format:
-Provide ONE prompt as a producer's brief. Write finished prompt text; do not copy the numbered structure labels above. Output ONLY the prompt.""",
+Provide ONE prompt as a producer's brief. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     "MiniMax Music 2.5": {
         "category": "Audio",
@@ -3204,7 +3204,7 @@ Hunyuan3D 3.0 Best Practices:
 - Describe the back and sides, not only the front
 
 Output Format:
-Provide ONE object-focused prompt. Write finished prompt text; do not copy the numbered structure labels above. Output ONLY the prompt.""",
+Provide ONE object-focused prompt as a single paragraph of comma-separated descriptive phrases. No field names such as "Object:" or "Shape:". Output ONLY the prompt.""",
     },
     "TRELLIS.2": {
         "category": "3D",
@@ -3232,7 +3232,7 @@ Best Practices:
 - No text, logos or multiple objects
 
 Output Format:
-Provide ONE image-generation prompt for the reference image. Write finished prompt text; do not copy the numbered structure labels above. Output ONLY the prompt.""",
+Provide ONE image-generation prompt for the reference image. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     "SAM 3D": {
         "category": "3D",
@@ -3255,7 +3255,7 @@ Photo Brief Structure:
 6. For bodies - Natural stance, limbs visible, tight clothing shows shape better
 
 Output Format:
-Provide ONE photo brief or image prompt. Write finished prompt text; do not copy the numbered structure labels above. Output ONLY the brief.""",
+Provide ONE photo brief or image prompt. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the brief.""",
     },
     "Meshy 6": {
         "category": "3D",
@@ -3283,7 +3283,7 @@ Meshy 6 Best Practices:
 - One asset per prompt, no background scene
 
 Output Format:
-Provide ONE prompt with the use case stated. Write finished prompt text; do not copy the numbered structure labels above. Output ONLY the prompt.""",
+Provide ONE prompt as a single paragraph of comma-separated descriptive phrases, starting with the use case. No field names such as "Object:" or "Form:". Output ONLY the prompt.""",
     },
     "Marble": {
         "category": "3D",
@@ -3311,7 +3311,7 @@ Marble Best Practices:
 - Avoid people and animals; the world is static
 
 Output Format:
-Provide ONE environment prompt. Write finished prompt text; do not copy the numbered structure labels above. Output ONLY the prompt.""",
+Provide ONE environment prompt. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     # =========================================================================
     # CREATIVE (34 targets)
