@@ -166,7 +166,7 @@ def test_settings(tmp_path: Path) -> Settings:
         port=7610,
         models_dir=tmp_path / "models",
         default_batch_size=512,
-        default_chat_format="llama-3",
+        default_chat_format=None,
         gpu_detection_timeout=5,
         max_prompt_length=10000,
         min_temperature=0.1,

@@ -99,7 +99,7 @@ compiler. The GPU image compiles it against CUDA, which takes a while.
 ## ✨ Features
 
 - **Smart GPU Detection** - Automatically selects the best model for your VRAM
-- **7 LLM Tiers** - From 1B (CPU) to 8B parameters (24GB+ VRAM) using uncensored Dolphin models
+- **8 LLM Tiers** - From 1B (CPU) to 24B parameters (24GB+ VRAM) using uncensored Dolphin models
 - **146 Specialized Targets** - Video (36), Image (35), Audio (20), 3D (21), Creative (34)
 - **Category Filter** - Narrow 146 targets down to one category, or type to search
 - **Per-Category Examples** - The starter ideas match the selected target, not just video
@@ -162,7 +162,7 @@ Story Writer, Code Generator, Technical Writer, Marketing Copy, SEO Content, Scr
 
 ## 🧠 LLM Options
 
-PromptMill automatically selects a tier based on detected VRAM. All tiers are **uncensored Dolphin 3.0** builds. The VRAM column is weights plus KV cache at the listed context length, not weights alone.
+PromptMill automatically selects a tier based on detected VRAM. All tiers are **uncensored Dolphin 3.0** builds. The VRAM column is weights plus KV cache at the listed context length, not weights alone. The chat template is read from the GGUF, not hardcoded.
 
 | VRAM | Model | Context | Needs | Quality |
 |:-----|:------|:--------|:------|:--------|
@@ -172,7 +172,8 @@ PromptMill automatically selects a tier based on detected VRAM. All tiers are **
 | 8GB | Dolphin 3.0 Llama 3.1 8B Q4_K_M | 8K | ~6GB | ⭐⭐⭐⭐ |
 | 12GB | Dolphin 3.0 Llama 3.1 8B Q6_K_L | 8K | ~8GB | ⭐⭐⭐⭐ |
 | 16GB | Dolphin 3.0 Llama 3.1 8B Q8 | 16K | ~10GB | ⭐⭐⭐⭐⭐ |
-| 24GB+ | Dolphin 3.0 Llama 3.1 8B Q8 | 32K | ~13GB | ⭐⭐⭐⭐⭐ |
+| 24GB | Dolphin 3.0 Mistral 24B Q4_K_M | 32K | ~21GB | ⭐⭐⭐⭐⭐ |
+| 32GB+ | Dolphin 3.0 Mistral 24B Q6_K_L | 32K | ~25GB | ⭐⭐⭐⭐⭐ |
 
 ---
 
@@ -198,7 +199,7 @@ curl -s http://localhost:7610/api/generate \
 {
   "prompt": "Wide establishing shot of a lone lighthouse ...",
   "target": "[Video] Sora 2",
-  "model": "24GB+ VRAM (RTX 3090, RTX 4090, RTX 5090)",
+  "model": "32GB+ VRAM (RTX 5090)",
   "characters": 412,
   "words": 63
 }

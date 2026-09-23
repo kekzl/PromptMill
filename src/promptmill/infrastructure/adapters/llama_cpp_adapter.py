@@ -30,14 +30,14 @@ class LlamaCppAdapter(LLMPort):
 
     def __init__(
         self,
-        chat_format: str = "llama-3",
+        chat_format: str | None = None,
         batch_size: int = 512,
     ) -> None:
         """Initialize the adapter.
 
         Args:
-            chat_format: Fallback chat template, used when a model does not
-                declare its own.
+            chat_format: Fallback chat template for models without an override.
+                None lets llama.cpp use the template embedded in the GGUF.
             batch_size: Batch size for inference.
         """
         self._llm: Any = None  # Llama instance, Any to avoid import at module level
@@ -150,7 +150,8 @@ class LlamaCppAdapter(LLMPort):
             model_path: Path to the model file.
             n_gpu_layers: Number of layers to offload to GPU (-1 for all).
             context_length: Maximum context window size.
-            chat_format: Chat template name, or None to use the adapter default.
+            chat_format: Chat template name, or None for the adapter default
+                (the GGUF-embedded template unless configured).
 
         Raises:
             FileNotFoundError: If model file doesn't exist.
@@ -169,7 +170,7 @@ class LlamaCppAdapter(LLMPort):
         logger.info(f"Loading model: {model_path}")
         logger.info(
             f"Config: n_gpu_layers={n_gpu_layers}, n_ctx={context_length}, "
-            f"chat_format={effective_chat_format}"
+            f"chat_format={effective_chat_format or 'gguf'}"
         )
 
         try:

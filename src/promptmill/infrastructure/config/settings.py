@@ -27,8 +27,8 @@ class Settings:
 
     # LLM configuration
     default_batch_size: int = 512
-    # Fallback only: each Model carries its own chat_format.
-    default_chat_format: str = "llama-3"
+    # None: llama.cpp reads the chat template embedded in the GGUF.
+    default_chat_format: str | None = None
     gpu_detection_timeout: int = 5
 
     # Input validation limits

@@ -333,6 +333,21 @@ class TestSelectModelByVRAMUseCase:
         assert gpu_info is not None
         assert gpu_info.vram_gb == 24.0
 
+    def test_select_32gb_model(
+        self,
+        mock_gpu_detector: MagicMock,
+    ) -> None:
+        """An RTX 5090 reports 32607 MiB, which selects the 32GB tier."""
+        mock_gpu_detector.detect.return_value = GPUInfo(
+            name="RTX 5090",
+            vram_mb=32607,
+            driver_version="580.0",
+        )
+
+        model, _ = SelectModelByVRAMUseCase(gpu_detector=mock_gpu_detector).execute()
+
+        assert model.key == "32gb_vram"
+
     def test_select_8gb_model(
         self,
         mock_gpu_detector: MagicMock,

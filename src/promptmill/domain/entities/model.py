@@ -22,9 +22,9 @@ class Model:
         vram_required: Approximate VRAM requirement string, weights plus KV cache
             at the configured context length.
         revision: Git revision (commit hash) for reproducible downloads.
-        chat_format: llama.cpp chat template name for this model's base
-            architecture. Wrong values silently produce garbage output, so it
-            belongs to the model, not to the runtime.
+        chat_format: llama.cpp chat template name override. None uses the
+            template embedded in the GGUF; a wrong override silently produces
+            garbage output.
     """
 
     key: str
@@ -36,7 +36,7 @@ class Model:
     description: str
     vram_required: str
     revision: str | None = None
-    chat_format: str = "llama-3"
+    chat_format: str | None = None
 
     def get_local_path(self, models_dir: Path) -> Path:
         """Get the expected local file path for this model.

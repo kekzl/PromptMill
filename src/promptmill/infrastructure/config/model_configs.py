@@ -1,7 +1,8 @@
 """Model configurations by VRAM tier.
 
 All tiers run Dolphin 3.0 (uncensored). ``vram_required`` is weights plus the
-KV cache at the configured context length, not weights alone.
+KV cache at the configured context length, not weights alone. The chat
+template comes from the GGUF itself (``chat_format=None``).
 """
 
 from promptmill.domain.entities.model import Model
@@ -76,13 +77,24 @@ MODEL_CONFIGS: dict[str, Model] = {
     ),
     "24gb_vram": Model(
         key="24gb_vram",
-        name="24GB+ VRAM (RTX 3090, RTX 4090, RTX 5090)",
-        repo_id="bartowski/Dolphin3.0-Llama3.1-8B-GGUF",
-        filename="Dolphin3.0-Llama3.1-8B-Q8_0.gguf",
+        name="24GB VRAM (RTX 3090, RTX 4090)",
+        repo_id="bartowski/cognitivecomputations_Dolphin3.0-Mistral-24B-GGUF",
+        filename="cognitivecomputations_Dolphin3.0-Mistral-24B-Q4_K_M.gguf",
         context_length=32768,
         n_gpu_layers=-1,
-        description="Dolphin 3.0 8B Q8, 32K context - Uncensored, longest context",
-        vram_required="~13GB",
+        description="Dolphin 3.0 Mistral 24B Q4_K_M, 32K context - Uncensored, large model",
+        vram_required="~21GB",
+        revision="main",
+    ),
+    "32gb_vram": Model(
+        key="32gb_vram",
+        name="32GB+ VRAM (RTX 5090)",
+        repo_id="bartowski/cognitivecomputations_Dolphin3.0-Mistral-24B-GGUF",
+        filename="cognitivecomputations_Dolphin3.0-Mistral-24B-Q6_K_L.gguf",
+        context_length=32768,
+        n_gpu_layers=-1,
+        description="Dolphin 3.0 Mistral 24B Q6_K_L, 32K context - Uncensored, maximum quality",
+        vram_required="~25GB",
         revision="main",
     ),
 }
@@ -96,6 +108,7 @@ MODEL_KEYS_ORDERED: list[str] = [
     "12gb_vram",
     "16gb_vram",
     "24gb_vram",
+    "32gb_vram",
 ]
 
 
@@ -156,7 +169,9 @@ def select_model_by_vram(vram_mb: int) -> Model:
     vram_gb = vram_mb / 1024
 
     match vram_gb:
-        case v if v >= 20:
+        case v if v >= 28:
+            return MODEL_CONFIGS["32gb_vram"]
+        case v if v >= 22:
             return MODEL_CONFIGS["24gb_vram"]
         case v if v >= 14:
             return MODEL_CONFIGS["16gb_vram"]
