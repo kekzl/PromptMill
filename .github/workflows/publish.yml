@@ -12,14 +12,14 @@ name: Publish images
 # Note on triggers: the auto-merge workflow enables auto-merge with
 # GITHUB_TOKEN, and a merge performed that way does NOT trigger further
 # workflow runs. A plain merge to master therefore never publishes on its own.
-# Publishing a GitHub release, or pushing a v* tag with your own credentials,
-# does trigger this; workflow_dispatch covers everything else.
+# Pushing a v* tag with your own credentials triggers this; publishing a
+# GitHub release creates its tag and so triggers the same push event. There is
+# no release trigger: it would start a second, identical build of the same tag.
+# workflow_dispatch covers everything else.
 on:
   push:
     branches: [master]
     tags: ["v*"]
-  release:
-    types: [published]
   workflow_dispatch:
 
 env:
@@ -41,10 +41,7 @@ jobs:
             dockerfile: Dockerfile.cpu
           - variant: gpu
             dockerfile: Dockerfile.gpu
-    # Publishing a release also creates its tag, so the release event and the
-    # tag-push event both fire for the same commit and compute the same tags.
-    # Without this, two identical builds race to push them, and the GPU one
-    # takes ~25 minutes each.
+    # A newer run for the same ref supersedes an older one (GPU build ~25 min).
     concurrency:
       group: publish-${{ github.ref }}-${{ matrix.variant }}
       cancel-in-progress: true
@@ -80,14 +77,11 @@ jobs:
           BASE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           VARIANT: ${{ matrix.variant }}
           REF: ${{ github.ref }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           BASE="${BASE,,}"
           VERSION=""
           if [[ "$REF" == refs/tags/v* ]]; then
             VERSION="${REF#refs/tags/v}"
-          elif [[ "$RELEASE_TAG" == v* ]]; then
-            VERSION="${RELEASE_TAG#v}"
           fi
           if [[ -z "$VERSION" ]]; then
             TAGS="${BASE}:${VARIANT}"
