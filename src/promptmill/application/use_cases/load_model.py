@@ -50,12 +50,16 @@ class LoadModelUseCase:
         )
 
         with self.lock:
-            # Already loaded means same file AND same GPU split; a different
-            # split is a different runtime configuration and needs a reload.
+            # Already loaded means same file, GPU split AND context: the 16GB and
+            # 24GB tiers share one file with 16K vs 32K context.
             current_path = self.llm.get_loaded_model_path()
             expected_path = str(models_dir / model.filename)
 
-            if current_path == expected_path and self.llm.get_loaded_gpu_layers() == n_gpu_layers:
+            if (
+                current_path == expected_path
+                and self.llm.get_loaded_gpu_layers() == n_gpu_layers
+                and self.llm.get_loaded_context_length() == model.context_length
+            ):
                 logger.info(f"Model already loaded: {model.name}")
                 return
 

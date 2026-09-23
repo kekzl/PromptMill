@@ -68,6 +68,18 @@ class LLMPort(ABC):
         ...
 
     @abstractmethod
+    def get_loaded_context_length(self) -> int | None:
+        """Get the context window the current model was loaded with.
+
+        Two tiers can share one file with different contexts, so a reload
+        check must compare this too.
+
+        Returns:
+            Context length if a model is loaded, None otherwise.
+        """
+        ...
+
+    @abstractmethod
     def load(
         self,
         model_path: str,
