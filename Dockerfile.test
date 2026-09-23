@@ -21,4 +21,4 @@ RUN pip install --no-cache-dir --upgrade pip \
     "pytest-cov>=7.1.0" \
     "httpx2>=2.13.0"
 
-CMD ["pytest", "tests", "-q"]
+CMD ["sh", "-c", "ruff check . && ruff format --check . && mypy src && pytest tests -q"]

@@ -4,8 +4,8 @@ name: Publish images
 # compile llama-cpp-python themselves.
 #
 # Tags:
-#   ghcr.io/kekzl/promptmill:cpu        latest CPU build from master
-#   ghcr.io/kekzl/promptmill:gpu        latest GPU build from master
+#   ghcr.io/kekzl/promptmill:cpu        master or newest vX.Y.Z tag
+#   ghcr.io/kekzl/promptmill:gpu        master or newest vX.Y.Z tag
 #   ghcr.io/kekzl/promptmill:X.Y.Z-cpu  release build (git tag vX.Y.Z)
 #   ghcr.io/kekzl/promptmill:X.Y.Z-gpu  release build (git tag vX.Y.Z)
 
@@ -50,6 +50,9 @@ jobs:
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-tags: true
+          fetch-depth: 0
 
       # The CUDA devel image plus the build tree does not fit next to the
       # runner's preinstalled toolchains.
@@ -70,7 +73,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # master -> :cpu / :gpu, git tag vX.Y.Z -> :X.Y.Z-cpu and :X.Y-cpu as well.
+      # master -> :cpu/:gpu. Tag vX.Y.Z -> :X.Y.Z-cpu, :X.Y-cpu, plus :cpu if newest.
       - name: Compute tags
         id: tags
         env:
@@ -80,15 +83,22 @@ jobs:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           BASE="${BASE,,}"
-          TAGS="${BASE}:${VARIANT}"
           VERSION=""
           if [[ "$REF" == refs/tags/v* ]]; then
             VERSION="${REF#refs/tags/v}"
           elif [[ "$RELEASE_TAG" == v* ]]; then
             VERSION="${RELEASE_TAG#v}"
           fi
-          if [[ -n "$VERSION" ]]; then
-            TAGS="${TAGS},${BASE}:${VERSION}-${VARIANT},${BASE}:${VERSION%.*}-${VARIANT}"
+          if [[ -z "$VERSION" ]]; then
+            TAGS="${BASE}:${VARIANT}"
+          else
+            TAGS="${BASE}:${VERSION}-${VARIANT},${BASE}:${VERSION%.*}-${VARIANT}"
+            # Only the newest version moves :cpu/:gpu; a hotfix tag on an old
+            # line must not downgrade start.sh users.
+            NEWEST="$(git tag -l 'v*' --sort=-v:refname | head -1)"
+            if [[ "v${VERSION}" == "$NEWEST" ]]; then
+              TAGS="${BASE}:${VARIANT},${TAGS}"
+            fi
           fi
           echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
           echo "Publishing: ${TAGS}"
