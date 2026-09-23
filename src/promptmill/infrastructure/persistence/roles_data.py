@@ -969,7 +969,11 @@ Kling 3.0 Best Practices:
 - One main action per shot
 
 Output Format:
-Provide ONE multi-shot prompt with labeled shots, dialogue and sound. Output ONLY the prompt.""",
+Follow this skeleton exactly; replace the angle brackets, keep only the "Shot N:" labels:
+<one sentence on the look, then one sentence per character with fixed descriptors>
+Shot 1: <framing, camera move, action, dialogue in quotes, sound>
+Shot 2: <...>
+Start with the look sentence itself, never with a label such as "Style:" or "Characters:". Output ONLY the prompt.""",
     },
     "Seedance 2.0": {
         "category": "Video",
@@ -996,7 +1000,12 @@ Seedance 2.0 Best Practices:
 - Keep product and logo shots static and well lit for ads
 
 Output Format:
-Provide ONE prompt with references, shots and audio. If the user supplied no references, omit that part. Output ONLY the prompt.""",
+Follow this skeleton exactly; replace the angle brackets, keep only the "Shot N:" and "Audio:" labels:
+<one sentence on the subject with fixed descriptors, one sentence on style and color grade>
+Shot 1: <framing, camera move, action>
+Shot 2: <...>
+Audio: <dialogue in quotes, effects, music style and tempo>
+Mention references such as @image1 only if the user's input names them; never invent references. Start with the subject sentence itself, never with a label such as "Subject:". Output ONLY the prompt.""",
     },
     "Wan 2.6": {
         "category": "Video",
@@ -1025,7 +1034,7 @@ Wan 2.6 Best Practices:
 - One clear action per shot
 
 Output Format:
-Provide ONE detailed prompt, with numbered shots for narratives. Output ONLY the prompt.""",
+Provide ONE detailed prompt, with numbered shots for narratives. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     "Hailuo 2.3": {
         "category": "Video",
@@ -1053,7 +1062,7 @@ Hailuo 2.3 Best Practices:
 - Keep the scene to one location
 
 Output Format:
-Provide ONE prompt with bracketed camera commands. Output ONLY the prompt.""",
+Write ONE paragraph of flowing prose: subject, motion beats in order, facial expression, setting, and end with one or two bracketed camera commands such as [Push in]. No numbered list, no field names. Output ONLY the prompt.""",
     },
     "PixVerse V5": {
         "category": "Video",
@@ -1081,7 +1090,7 @@ PixVerse V5 Best Practices:
 - For image-to-video, describe only the motion, not the image content
 
 Output Format:
-Provide ONE concise prompt. Output ONLY the prompt.""",
+Provide ONE concise prompt. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     "Midjourney Video": {
         "category": "Video",
@@ -1107,7 +1116,7 @@ Midjourney Video Best Practices:
 - Suggest --motion low or --motion high
 
 Output Format:
-Provide ONE motion prompt with the suggested motion parameter. Output ONLY the prompt.""",
+Write one or two sentences describing what moves and how the camera moves, then append --motion low or --motion high. Never output only the parameter. Output ONLY the prompt.""",
     },
     "Runway Aleph": {
         "category": "Video",
@@ -1980,7 +1989,7 @@ GPT Image 2 Best Practices:
 - State the aspect ratio and resolution intent
 
 Output Format:
-Provide ONE descriptive prompt in natural language. Output ONLY the prompt.""",
+Provide ONE descriptive prompt in natural language. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     "Nano Banana 2": {
         "category": "Image",
@@ -2009,7 +2018,7 @@ Nano Banana 2 Best Practices:
 - Give context of use ("for a café menu", "for a YouTube thumbnail")
 
 Output Format:
-Provide ONE narrative prompt. Output ONLY the prompt.""",
+Provide ONE narrative prompt. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     "Midjourney V8": {
         "category": "Image",
@@ -2038,7 +2047,7 @@ Midjourney V8 Best Practices:
 - Avoid contradictory style words
 
 Output Format:
-Provide ONE Midjourney V8 prompt with suggested parameters. Output ONLY the prompt.""",
+Provide ONE single-line Midjourney V8 prompt: comma-separated descriptive phrases, then the parameters. No field names such as "Subject:". Output ONLY the prompt.""",
     },
     "Ideogram 4": {
         "category": "Image",
@@ -2066,7 +2075,7 @@ Ideogram 4 Best Practices:
 - Specify the background (solid color, texture, scene)
 
 Output Format:
-Provide ONE design prompt with all text in quotes. Output ONLY the prompt.""",
+Provide ONE design prompt with all text in quotes. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     "Reve 2.1": {
         "category": "Image",
@@ -2093,7 +2102,7 @@ Reve 2.1 Best Practices:
 - Keep style words consistent across the prompt
 
 Output Format:
-Provide ONE prompt with an explicit layout. Output ONLY the prompt.""",
+Write ONE paragraph of flowing prose that places every subject by position (left, center, right, foreground, background). No numbered list, no field names. Output ONLY the prompt.""",
     },
     # =========================================================================
     # AUDIO GENERATION (26 targets)
@@ -2567,7 +2576,7 @@ Suno v5.5 Best Practices:
 - For instrumentals, write "instrumental" in the style prompt and use only structure tags
 
 Output Format:
-Provide "Style:" on one line, then "Lyrics:" with the tagged lyrics. Output ONLY these two parts.""",
+Provide "Style:" on one line, then "Lyrics:" with the tagged lyrics. Put each section tag on its own line, followed by 2-4 lyric lines (chorus 4 lines). Output ONLY these two parts.""",
     },
     "Lyria 3": {
         "category": "Audio",
@@ -2596,7 +2605,7 @@ Lyria 3 Best Practices:
 - State "instrumental, no vocals" explicitly when needed
 
 Output Format:
-Provide ONE prompt as a producer's brief. Output ONLY the prompt.""",
+Provide ONE prompt as a producer's brief. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     "MiniMax Music 2.5": {
         "category": "Audio",
@@ -2620,7 +2629,7 @@ MiniMax Music 2.5 Best Practices:
 - Put the emotional arc in the style prompt ("builds from intimate to anthemic")
 
 Output Format:
-Provide "Style:" then "Lyrics:" with tagged sections. Output ONLY these two parts.""",
+Provide "Style:" then "Lyrics:" with tagged sections. Put each section tag on its own line, followed by 2-4 lyric lines (chorus 4 lines). Output ONLY these two parts.""",
     },
     "ElevenLabs v3": {
         "category": "Audio",
@@ -2671,7 +2680,7 @@ ACE-Step Best Practices:
 - Use [instrumental] as the only lyric line for instrumental tracks
 
 Output Format:
-Provide "Tags:" on one line, then "Lyrics:" with tagged sections. Output ONLY these two parts.""",
+Provide "Tags:" on one line, then "Lyrics:" with tagged sections. Put each section tag on its own line, followed by 2-4 lyric lines (chorus 4 lines). Output ONLY these two parts.""",
     },
     "MMAudio": {
         "category": "Audio",
@@ -3204,7 +3213,7 @@ Hunyuan3D 3.0 Best Practices:
 - Describe the back and sides, not only the front
 
 Output Format:
-Provide ONE object-focused prompt. Output ONLY the prompt.""",
+Provide ONE object-focused prompt as a single paragraph of comma-separated descriptive phrases. No field names such as "Object:" or "Shape:". Output ONLY the prompt.""",
     },
     "TRELLIS.2": {
         "category": "3D",
@@ -3232,7 +3241,7 @@ Best Practices:
 - No text, logos or multiple objects
 
 Output Format:
-Provide ONE image-generation prompt for the reference image. Output ONLY the prompt.""",
+Provide ONE image-generation prompt for the reference image. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     "SAM 3D": {
         "category": "3D",
@@ -3255,7 +3264,7 @@ Photo Brief Structure:
 6. For bodies - Natural stance, limbs visible, tight clothing shows shape better
 
 Output Format:
-Provide ONE photo brief or image prompt. Output ONLY the brief.""",
+Provide ONE photo brief or image prompt. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the brief.""",
     },
     "Meshy 6": {
         "category": "3D",
@@ -3283,7 +3292,7 @@ Meshy 6 Best Practices:
 - One asset per prompt, no background scene
 
 Output Format:
-Provide ONE prompt with the use case stated. Output ONLY the prompt.""",
+Provide ONE prompt as a single paragraph of descriptive phrases: first the named object and its shape, then materials and colors, style and pose, and last the use case. No field names such as "Object:" or "Form:". Output ONLY the prompt.""",
     },
     "Marble": {
         "category": "3D",
@@ -3311,7 +3320,7 @@ Marble Best Practices:
 - Avoid people and animals; the world is static
 
 Output Format:
-Provide ONE environment prompt. Output ONLY the prompt.""",
+Provide ONE environment prompt. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
     },
     # =========================================================================
     # CREATIVE (34 targets)
