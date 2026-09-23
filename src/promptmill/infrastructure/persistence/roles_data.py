@@ -3283,7 +3283,7 @@ Meshy 6 Best Practices:
 - One asset per prompt, no background scene
 
 Output Format:
-Provide ONE prompt as a single paragraph of comma-separated descriptive phrases, starting with the use case. No field names such as "Object:" or "Form:". Output ONLY the prompt.""",
+Provide ONE prompt as a single paragraph of descriptive phrases: first the named object and its shape, then materials and colors, style and pose, and last the use case. No field names such as "Object:" or "Form:". Output ONLY the prompt.""",
     },
     "Marble": {
         "category": "3D",
