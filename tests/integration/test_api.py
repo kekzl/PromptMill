@@ -1,5 +1,6 @@
 """Integration tests for the REST API."""
 
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -12,6 +13,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from promptmill.domain.entities.model import Model
+from promptmill.domain.exceptions import GenerationError
 from promptmill.infrastructure.adapters.role_repository_adapter import RoleRepositoryAdapter
 from promptmill.presentation.api import create_api_router
 
@@ -25,6 +27,16 @@ TEST_MODEL = Model(
     description="Test tier",
     vram_required="~1.5GB",
 )
+
+
+def _failing_after(n: int) -> Callable[..., Iterator[str]]:
+    """Build a generate() stand-in that yields n chunks, then fails."""
+
+    def generate(*_a: object, **_k: object) -> Iterator[str]:
+        yield from ["chunk"] * n
+        raise GenerationError("ctx full")
+
+    return generate
 
 
 @pytest.fixture
@@ -61,6 +73,7 @@ def client(prompt_service: MagicMock, model_service: MagicMock) -> TestClient:
             model_service=model_service,
             health_service=health_service,
             role_repository=RoleRepositoryAdapter(),
+            default_model=TEST_MODEL,
         )
     )
     return TestClient(app)
@@ -141,9 +154,19 @@ class TestGenerate:
     def test_defaults_to_auto_selected_model(
         self, client: TestClient, target: str, model_service: MagicMock
     ) -> None:
-        """Omitting the model falls back to VRAM-based selection."""
-        client.post("/api/generate", json={"input": "idea", "target": target})
-        model_service.select_optimal_model.assert_called_once()
+        """Omitting the model uses the tier detected at startup, without re-running nvidia-smi."""
+        response = client.post("/api/generate", json={"input": "idea", "target": target})
+        assert response.json()["model"] == TEST_MODEL.name
+        model_service.select_optimal_model.assert_not_called()
+
+    def test_generation_failure_is_503(
+        self, client: TestClient, target: str, prompt_service: MagicMock
+    ) -> None:
+        """A runtime failure maps to 503 with detail, not a bare 500."""
+        prompt_service.generate.side_effect = _failing_after(0)
+        response = client.post("/api/generate", json={"input": "idea", "target": target})
+        assert response.status_code == 503
+        assert "ctx full" in response.json()["detail"]
 
     def test_explicit_model_is_used(self, client: TestClient, target: str) -> None:
         """A named model is honoured."""
@@ -207,6 +230,24 @@ class TestGenerateStream:
         )
         assert response.status_code == 200
         assert response.text == "a cinematic shot of a lighthouse"
+
+    def test_stream_load_failure_is_503(
+        self, client: TestClient, target: str, prompt_service: MagicMock
+    ) -> None:
+        """A failure before the first chunk is a 503, not a 200 with error text."""
+        prompt_service.generate.side_effect = _failing_after(0)
+        response = client.post("/api/generate/stream", json={"input": "idea", "target": target})
+        assert response.status_code == 503
+        assert "ctx full" in response.json()["detail"]
+
+    def test_stream_mid_failure_appends_error(
+        self, client: TestClient, target: str, prompt_service: MagicMock
+    ) -> None:
+        """Once streaming has started, a failure is appended to the body."""
+        prompt_service.generate.side_effect = _failing_after(1)
+        response = client.post("/api/generate/stream", json={"input": "idea", "target": target})
+        assert response.status_code == 200
+        assert response.text == "chunk\n[error] Generation failed: ctx full"
 
     def test_stream_rejects_unknown_target(self, client: TestClient) -> None:
         """Validation happens before streaming starts."""

@@ -78,3 +78,11 @@ class InsufficientSpaceError(InfrastructureError):
             f"Insufficient disk space: {required_gb:.1f} GB required, "
             f"{available_gb:.1f} GB available"
         )
+
+
+class GenerationError(InfrastructureError):
+    """Raised when the inference runtime fails mid-generation."""
+
+    def __init__(self, reason: str) -> None:
+        self.reason = reason
+        super().__init__(f"Generation failed: {reason}")

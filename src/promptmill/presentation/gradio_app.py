@@ -355,7 +355,7 @@ class GradioApp:
                 fn=self._generate_prompt,
                 inputs=generation_inputs,
                 outputs=output,
-            ).then(
+            ).success(
                 fn=self._record_generation,
                 inputs=[history_state, user_idea, role_dropdown, model_dropdown, output],
                 outputs=[history_state, history_dropdown, output_stats],
@@ -538,8 +538,7 @@ class GradioApp:
 
             model = self.model_service.get_model_by_name(model_choice)
             if model is None:
-                yield f"Model not found: {model_choice}"
-                return
+                raise gr.Error(f"Model not found: {model_choice}")
 
             accumulated = ""
             for chunk in self.prompt_service.generate(
@@ -548,9 +547,12 @@ class GradioApp:
                 accumulated += chunk
                 yield accumulated
 
+        except gr.Error:
+            raise
         except Exception as e:
+            # gr.Error fails the event, so .success() skips the history entry.
             logger.exception("Generation error")
-            yield f"Error: {e}"
+            raise gr.Error(f"Error: {e}") from e
 
     def _record_generation(
         self,
@@ -795,6 +797,7 @@ class GradioApp:
                 model_service=self.model_service,
                 health_service=self.health_service,
                 role_repository=self.role_repository,
+                default_model=self.default_model,
             )
         )
 

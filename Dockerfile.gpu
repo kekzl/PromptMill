@@ -46,8 +46,8 @@ RUN pip install --no-cache-dir --upgrade pip
 
 # Install Python dependencies
 RUN pip install --no-cache-dir \
-    "huggingface_hub>=1.31.0,<2.0.0" \
-    "gradio>=6.27.0,<7.0.0" \
+    "huggingface_hub>=1.32.0,<2.0.0" \
+    "gradio>=6.28.0,<7.0.0" \
     "pydantic>=2.13.0,<3.0.0"
 
 # Install llama-cpp-python with CUDA (this is the heavy compile step)

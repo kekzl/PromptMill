@@ -4,6 +4,7 @@ These exercise the handler functions directly; no browser or Gradio server is
 started.
 """
 
+from collections.abc import Iterator
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -11,8 +12,11 @@ import pytest
 
 pytest.importorskip("gradio")
 
+import gradio as gr
+
 from promptmill.domain.entities.model import Model
 from promptmill.domain.entities.role import RoleCategory
+from promptmill.domain.exceptions import GenerationError
 from promptmill.infrastructure.adapters.role_repository_adapter import RoleRepositoryAdapter
 from promptmill.presentation.examples import examples_for
 from promptmill.presentation.gradio_app import ALL_CATEGORIES, GradioApp
@@ -165,16 +169,29 @@ class TestGeneration:
         assert app.prompt_service.generate.call_args.kwargs["n_gpu_layers_override"] == 17
 
     def test_unknown_model_reports_error(self, app: GradioApp) -> None:
-        """A missing model yields a message instead of an exception."""
-        out = list(app._generate_prompt("idea", "[Video] Sora 2", "nope", 0.7, 256, 0))
-        assert out == ["Model not found: nope"]
+        """A missing model fails the event, so it is never recorded as a prompt."""
+        with pytest.raises(gr.Error, match="Model not found: nope"):
+            list(app._generate_prompt("idea", "[Video] Sora 2", "nope", 0.7, 256, 0))
 
     def test_invalid_request_is_reported(self, app: GradioApp) -> None:
-        """Validation errors surface as text, not a traceback."""
-        out = list(
-            app._generate_prompt("idea", "[Video] Sora 2", "CPU Only (2-4GB RAM)", 9.0, 256, 0)
-        )
-        assert out[0].startswith("Error:")
+        """Validation errors surface as a gr.Error, not a traceback or output text."""
+        with pytest.raises(gr.Error, match="Error: Temperature"):
+            list(
+                app._generate_prompt("idea", "[Video] Sora 2", "CPU Only (2-4GB RAM)", 9.0, 256, 0)
+            )
+
+    def test_generation_failure_keeps_partial_output(self, app: GradioApp) -> None:
+        """A mid-stream failure raises after the chunks already shown."""
+
+        def failing(*_a: object, **_k: object) -> Iterator[str]:
+            yield "part"
+            raise GenerationError("ctx full")
+
+        app.prompt_service.generate.side_effect = failing
+        gen = app._generate_prompt("idea", "[Video] Sora 2", "CPU Only (2-4GB RAM)", 0.7, 256, 0)
+        assert next(gen) == "part"
+        with pytest.raises(gr.Error, match="ctx full"):
+            next(gen)
 
     def test_record_generation_appends_and_labels(self, app: GradioApp) -> None:
         """A finished generation lands in history with a dropdown label."""
