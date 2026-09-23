@@ -70,11 +70,12 @@ no framework. Adding a dependency means adding a property there and nothing else
 - **"Already loaded" means path AND GPU split.** The GPU-layers slider is a real override;
   `LoadModelUseCase` reloads when it changes, so a path-only comparison would silently
   ignore the user.
-- **`chat_format` belongs to the `Model`,** not the adapter. `Settings.default_chat_format`
-  is only the fallback. A wrong template produces garbage silently, never a crash.
-- **Context grows with the tier** (4K up to 32K on 24GB). `vram_required` is weights plus
+- **The chat template comes from the GGUF.** `Model.chat_format=None` lets llama.cpp use
+  the embedded template; set it only as an override. A wrong template produces garbage silently, never a crash.
+- **Context grows with the tier** (4K up to 32K on 24GB and 32GB). `vram_required` is weights plus
   KV cache at that context, so it must be recomputed when a context length changes.
-- Model selection is by VRAM tier, 7 uncensored Dolphin 3.0 variants from 1B to 8B.
+- Model selection is by VRAM tier, 8 uncensored Dolphin 3.0 variants from 1B to 24B.
+  Thresholds live once in `select_model_by_vram` (`model_configs.py`); the use case calls it.
 - **UI state is per session.** Examples and history live in `gr.State`, never in the
   `GradioApp` instance, which is shared across all browsers.
 - **The CPU image installs llama-cpp-python from the project's own wheel index,**

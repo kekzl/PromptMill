@@ -50,8 +50,8 @@ class LoadModelUseCase:
         )
 
         with self.lock:
-            # Already loaded means same file, GPU split AND context: the 16GB and
-            # 24GB tiers share one file with 16K vs 32K context.
+            # Already loaded means same file, GPU split AND context: tiers may
+            # share one file with different context lengths.
             current_path = self.llm.get_loaded_model_path()
             expected_path = str(models_dir / model.filename)
 

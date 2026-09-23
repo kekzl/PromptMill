@@ -9,6 +9,7 @@ pytest.importorskip("gradio")
 
 from promptmill.container import Container
 from promptmill.domain.entities.role import RoleCategory
+from promptmill.infrastructure.config.model_configs import MODEL_CONFIGS
 from promptmill.infrastructure.config.settings import Settings
 from promptmill.infrastructure.persistence.roles_data import ROLES_DATA
 
@@ -99,7 +100,7 @@ class TestContainerIntegration:
         """Test model service can list available models."""
         models = container.model_service.get_available_models()
 
-        assert len(models) == 7  # 7 model tiers
+        assert len(models) == len(MODEL_CONFIGS)
         assert all(m.key for m in models)
         assert all(m.name for m in models)
 

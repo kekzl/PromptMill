@@ -93,7 +93,8 @@ class LLMPort(ABC):
             model_path: Path to the model file.
             n_gpu_layers: Number of layers to offload to GPU (-1 for all).
             context_length: Maximum context window size.
-            chat_format: Chat template name, or None to use the adapter default.
+            chat_format: Chat template name, or None for the adapter default
+                (the GGUF-embedded template unless configured).
 
         Raises:
             FileNotFoundError: If model file doesn't exist.

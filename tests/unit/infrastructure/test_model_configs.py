@@ -37,17 +37,16 @@ class TestTierIntegrity:
         contexts = [m.context_length for m in get_all_models()]
         assert contexts == sorted(contexts)
 
-    def test_every_tier_declares_a_chat_format(self) -> None:
-        """A wrong or missing template yields garbage output, not an error."""
-        assert all(m.chat_format for m in get_all_models())
+    def test_tiers_use_the_embedded_chat_template(self) -> None:
+        """A hardcoded template can disagree with the GGUF and yields garbage
+        output, not an error: Dolphin 3.0 is ChatML, not llama-3."""
+        assert all(m.chat_format is None for m in get_all_models())
 
-    def test_top_tier_is_not_an_older_model(self) -> None:
-        """Regression guard: the 24GB tier once ran Dolphin 2.9.4 while the
-        16GB tier ran 3.0, making the top tier a downgrade."""
-        assert MODEL_CONFIGS["24gb_vram"].repo_id == MODEL_CONFIGS["16gb_vram"].repo_id
-        assert MODEL_CONFIGS["24gb_vram"].context_length > (
-            MODEL_CONFIGS["16gb_vram"].context_length
-        )
+    def test_large_tiers_run_a_larger_model(self) -> None:
+        """The 24GB and 32GB tiers run the 24B model, not the 16GB tier's 8B."""
+        for key in ("24gb_vram", "32gb_vram"):
+            assert MODEL_CONFIGS[key].repo_id != MODEL_CONFIGS["16gb_vram"].repo_id
+            assert "24B" in MODEL_CONFIGS[key].repo_id
 
     def test_only_cpu_tier_runs_on_cpu(self) -> None:
         """Every GPU tier offloads all layers."""
@@ -95,10 +94,12 @@ class TestVramSelection:
             (12, "12gb_vram"),
             (14, "16gb_vram"),
             (16, "16gb_vram"),
-            (20, "24gb_vram"),
+            (20, "16gb_vram"),
+            (22, "24gb_vram"),
             (24, "24gb_vram"),
-            (32, "24gb_vram"),
-            (80, "24gb_vram"),
+            (28, "32gb_vram"),
+            (32, "32gb_vram"),
+            (80, "32gb_vram"),
         ],
     )
     def test_tier_boundaries(self, vram_gb: int, expected_key: str) -> None:
