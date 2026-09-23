@@ -996,7 +996,7 @@ Seedance 2.0 Best Practices:
 - Keep product and logo shots static and well lit for ads
 
 Output Format:
-Provide ONE prompt with references, shots and audio. If the user supplied no references, omit that part. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
+Write one paragraph for subject and style, then one line per shot starting with "Shot 1:", "Shot 2:", then one line starting with "Audio:". Mention references such as @image1 only if the user's input names them; never invent references. No field names such as "Subject:". Output ONLY the prompt.""",
     },
     "Wan 2.6": {
         "category": "Video",
@@ -1053,7 +1053,7 @@ Hailuo 2.3 Best Practices:
 - Keep the scene to one location
 
 Output Format:
-Provide ONE prompt with bracketed camera commands. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
+Write ONE paragraph of flowing prose: subject, motion beats in order, facial expression, setting, and end with one or two bracketed camera commands such as [Push in]. No numbered list, no field names. Output ONLY the prompt.""",
     },
     "PixVerse V5": {
         "category": "Video",
@@ -1107,7 +1107,7 @@ Midjourney Video Best Practices:
 - Suggest --motion low or --motion high
 
 Output Format:
-Provide ONE motion prompt with the suggested motion parameter. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
+Write one or two sentences describing what moves and how the camera moves, then append --motion low or --motion high. Never output only the parameter. Output ONLY the prompt.""",
     },
     "Runway Aleph": {
         "category": "Video",
@@ -2093,7 +2093,7 @@ Reve 2.1 Best Practices:
 - Keep style words consistent across the prompt
 
 Output Format:
-Provide ONE prompt with an explicit layout. Write finished prompt text without field names from the structure above (no "Subject:", no "1. Style -"). Output ONLY the prompt.""",
+Write ONE paragraph of flowing prose that places every subject by position (left, center, right, foreground, background). No numbered list, no field names. Output ONLY the prompt.""",
     },
     # =========================================================================
     # AUDIO GENERATION (26 targets)
