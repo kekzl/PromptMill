@@ -969,7 +969,11 @@ Kling 3.0 Best Practices:
 - One main action per shot
 
 Output Format:
-Write one paragraph for style and characters, then one line per shot starting with "Shot 1:", "Shot 2:" with action, dialogue and sound. Do not copy the numbered structure labels above. Output ONLY the prompt.""",
+Follow this skeleton exactly; replace the angle brackets, keep only the "Shot N:" labels:
+<one sentence on the look, then one sentence per character with fixed descriptors>
+Shot 1: <framing, camera move, action, dialogue in quotes, sound>
+Shot 2: <...>
+Start with the look sentence itself, never with a label such as "Style:" or "Characters:". Output ONLY the prompt.""",
     },
     "Seedance 2.0": {
         "category": "Video",
@@ -996,7 +1000,12 @@ Seedance 2.0 Best Practices:
 - Keep product and logo shots static and well lit for ads
 
 Output Format:
-Write one paragraph for subject and style, then one line per shot starting with "Shot 1:", "Shot 2:", then one line starting with "Audio:". Mention references such as @image1 only if the user's input names them; never invent references. No field names such as "Subject:". Output ONLY the prompt.""",
+Follow this skeleton exactly; replace the angle brackets, keep only the "Shot N:" and "Audio:" labels:
+<one sentence on the subject with fixed descriptors, one sentence on style and color grade>
+Shot 1: <framing, camera move, action>
+Shot 2: <...>
+Audio: <dialogue in quotes, effects, music style and tempo>
+Mention references such as @image1 only if the user's input names them; never invent references. Start with the subject sentence itself, never with a label such as "Subject:". Output ONLY the prompt.""",
     },
     "Wan 2.6": {
         "category": "Video",
