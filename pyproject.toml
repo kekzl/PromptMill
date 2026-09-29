@@ -32,7 +32,7 @@ classifiers = [
 
 dependencies = [
     "gradio>=6.28.0,<7.0.0",
-    "huggingface_hub>=1.32.0,<2.0.0",
+    "huggingface_hub>=1.32.0,<3.0.0",
     "llama-cpp-python>=0.3.35,<1.0.0",
     "pydantic>=2.13.0,<3.0.0",
 ]
