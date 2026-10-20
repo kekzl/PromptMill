@@ -3,7 +3,7 @@
 # absent: it is imported lazily inside the adapter and mocked in the tests, so
 # the suite stays fast and needs no compiler.
 
-FROM python:3.14-slim-trixie
+FROM python:3.15-slim-trixie
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app/src
